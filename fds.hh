@@ -141,10 +141,9 @@ class Timer
   }
   //
   bool NextTimeout(size_t timeout) {
-    const struct itimerspec time = {
-      .it_value.tv_sec=0,
-      .it_value.tv_nsec=static_cast<long>(timeout*1000000)
-    };
+    struct itimerspec time;
+    time.it_value.tv_sec=0;
+    time.it_value.tv_nsec=static_cast<long>(timeout*1000000);
     if(-1 < timerfd_settime(timerfd_, 0, &time, NULL)) {
       return true;
     }
