@@ -1,6 +1,5 @@
-#ifndef BASE_FDS_HH
-#define BASE_FDS_HH
-
+// -*-coding:utf-8-unix;-*-
+#pragma once
 #include <sys/types.h>
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
@@ -221,4 +220,3 @@ class UserEvent
 };
 //
 } // namespace base
-#endif

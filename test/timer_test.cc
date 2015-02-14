@@ -1,8 +1,9 @@
+// -*-coding:utf-8-unix;-*-
 #include <iostream>
 #include <thread>
 
 #include "pi.hh"
-#include "fds.hh"
+#include "linux/fds.hh"
 
 static void print_elapsed_time(void) {
   static struct timespec start;

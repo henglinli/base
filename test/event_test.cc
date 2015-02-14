@@ -1,7 +1,8 @@
+// -*-coding:utf-8-unix;-*-
 #include <iostream>
 #include <thread>
 
-#include "fds.hh"
+#include "linux/fds.hh"
 
 class StateMachine
     : public base::UserEvent<StateMachine> {

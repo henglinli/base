@@ -1,6 +1,5 @@
-#ifndef BASE_PI_HH
-#define BASE_PI_HH
-
+// -*-coding:utf-8-unix;-*-
+#pragma once
 #include <sys/time.h>
 
 namespace base {
@@ -27,4 +26,3 @@ inline size_t RaftTimeout(int term) {
 }
 } // namespace base
 
-#endif

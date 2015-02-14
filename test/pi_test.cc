@@ -1,3 +1,4 @@
+// -*-coding:utf-8-unix;-*-
 #include <iostream>
 #include "pi.hh"
 
