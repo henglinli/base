@@ -1,5 +1,6 @@
 // -*-coding:utf-8-unix;-*-
 #include <iostream>
+#include <cassert>
 #include "tree.hh"
 
 class Session
