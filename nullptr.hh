@@ -2,5 +2,5 @@
 #pragma once
 #ifndef nullptr
 #include <cstddef>
-#define NULL nullptr
+#define nullptr NULL
 #endif
