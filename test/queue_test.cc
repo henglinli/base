@@ -1,15 +1,17 @@
 // -*-coding:utf-8-unix;-*-
 #include <iostream>
-#include "queue.hh"
+#include "mpsc/queue.hh"
 
-using namespace ::base::atomic;
-class Message
-    : public StailqEntry<Message> {
+class Session
+    : public base::mpsc::Node<Session> {
+ public:
+  int _value;
 };
-
+//
 int main() {
-  Stailq<Message> header;
-  Message one;
-  header.Push(&one);
+  base::mpsc::Queue<Session> q;
+  Session s[10];
+  q.Push(s);
   return 0;
 }
+

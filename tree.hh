@@ -6,21 +6,26 @@
 namespace base {
 //
 template<typename Value>
-class RBNode {
- public:
- protected:
- private:
+struct Node {
   rb_node(Value) _node;
 };
 //
 template<typename Value>
-class RBTree {
+class Tree {
  public:
-  typedef RBTree<Value> This;
-  typedef rbt(Value) Tree;
-  rb_gen(static, _, Tree, Value, _node, Value::Compare);
+  //
+  typedef Tree<Value> This;
+  //
+  typedef rbt(Value) _Tree;
+  //
+  rb_gen(static, _, _Tree, Value, _node, Value::Compare);
+  //
+  Tree() {
+    This::_new(&_tree);
+  }
  protected:
  private:
+  _Tree _tree;
 };
 //
 }

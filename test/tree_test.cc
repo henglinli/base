@@ -3,7 +3,7 @@
 #include "tree.hh"
 
 class Session
-    : public base::RBNode<Session> {
+    : public base::Node<Session> {
  public:
   void Set(int fd) {
     fd_ = fd;
@@ -28,7 +28,7 @@ class Session
 };
 
 int main() {
-  base::RBTree<Session> header;
+  base::Tree<Session> header;
   // header.Empty();
   Session sessions[10];
   for (size_t i(0); i < sizeof(sessions)/sizeof(sessions[0]) ; ++i) {
@@ -48,3 +48,4 @@ int main() {
   */
   return 0;
 }
+

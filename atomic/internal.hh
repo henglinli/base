@@ -85,8 +85,9 @@ inline Integer NandAndFetch(Integer * ptr, Integer value) {
 // exchange
 template <typename Integer>
 inline Integer Exchange(Integer* ptr, Integer value) {
-  return __sync__lock_test_and_set(ptr, value);
+  return __sync_lock_test_and_set(ptr, value);
 }
 //
 } // namespace atomic 
 } // namespace base
+
