@@ -1,5 +1,7 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
+#include <cstdint>
+#include <cassert>
 #define RB_COMPAT
 #include "tree.h"
 
