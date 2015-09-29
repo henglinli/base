@@ -1,5 +1,5 @@
 // -*-coding:utf-8-unix;-*-
-#include <iostream>
+#include "gtest/gtest.h"
 #include "tree.hh"
 
 class Session
@@ -19,15 +19,11 @@ class Session
     }
   }
 
-  void Debug() {
-    std::cout << fd_ << std::endl;
-  }
-
  private:
   int fd_;
 };
 
-int main() {
+TEST(tree, basic) {
   base::Tree<Session> header;
   // header.Empty();
   Session sessions[10];
@@ -46,6 +42,5 @@ int main() {
     find->Debug();
   }
   */
-  return 0;
 }
 
