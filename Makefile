@@ -42,8 +42,7 @@ TESTS = $(patsubst %.cpp, %.exe, $(TESTS_SRC))
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
-GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
-                $(GTEST_DIR)/include/gtest/internal/*.h
+GTEST_HEADERS = $(wildcard $(GTEST_DIR)/include/gtest/*.h $(GTEST_DIR)/include/gtest/internal/*.h)
 
 # House-keeping build targets.
 
