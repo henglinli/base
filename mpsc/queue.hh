@@ -8,7 +8,7 @@ namespace mpsc {
 // www.1024cores.net version lockfree queue
 template<typename Value>
 struct Node {
-  Value* _next;
+  Value* volatile _next;
 };
 //
 template<typename Value>

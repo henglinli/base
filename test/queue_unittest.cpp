@@ -1,5 +1,5 @@
 // -*-coding:utf-8-unix;-*-
-#include <iostream>
+#include "gtest/gtest.h"
 #include "mpsc/queue.hh"
 
 class Session
@@ -8,10 +8,9 @@ class Session
   int _value;
 };
 //
-int main() {
+TEST(queue, base) {
   base::mpsc::Queue<Session> q;
   Session s[10];
   q.Push(s);
-  return 0;
 }
 
