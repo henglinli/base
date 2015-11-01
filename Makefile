@@ -23,11 +23,9 @@ USER_DIR = ../samples
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=0
-
+CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 #
 RAGEL = ragel
-CXX = clang++
 CXXFLAGS += -Wall -Wextra -fno-exceptions -fno-rtti
 LDFLAGS += -pthread
 CPPFLAGS += -I.
@@ -48,8 +46,7 @@ GTEST_HEADERS = $(wildcard $(GTEST_DIR)/include/gtest/*.h $(GTEST_DIR)/include/g
 
 all : gtest_main.a $(TESTS)
 	./test/tree_unittest.exe
-	./test/queue_unittest.exe
-
+	./test/mpsc_unittest.exe
 #
 clean :
 	$(RM) $(TESTS) gtest.a gtest_main.a *.o
