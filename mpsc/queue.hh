@@ -1,7 +1,7 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
-#include "nullptr.hh"
-#include "atomic/internal.hh"
+#include "macros.hh"
+#include "atomic.hh"
 
 namespace base {
 namespace mpsc {
@@ -31,7 +31,7 @@ class Queue {
   //
   void Push(Value* value) {
     value->_next = nullptr;
-    Value* prev = atomic::Exchange(&_head, value);
+    Value* prev = Exchange(&_head, value);
     prev->_next = value;
   }
   //

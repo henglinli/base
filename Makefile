@@ -47,6 +47,7 @@ GTEST_HEADERS = $(wildcard $(GTEST_DIR)/include/gtest/*.h $(GTEST_DIR)/include/g
 all : gtest_main.a $(TESTS)
 	./test/tree_unittest.exe
 	./test/mpsc_unittest.exe
+	./test/mpmc_unittest.exe
 	./test/thread_unittest.exe
 #
 clean :

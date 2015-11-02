@@ -1,8 +1,7 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
-
+//
 namespace base {
-namespace atomic {
 // cas
 template <typename Integer>
 inline bool BoolComapreAndSwap(Integer * ptr,
@@ -88,6 +87,5 @@ inline Integer Exchange(Integer* ptr, Integer value) {
   return __sync_lock_test_and_set(ptr, value);
 }
 //
-} // namespace atomic 
 } // namespace base
 

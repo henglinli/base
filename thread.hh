@@ -2,7 +2,7 @@
 #pragma once
 #include <pthread.h>
 #include <stdint.h>
-#include "nullptr.hh"
+#include "macros.hh"
 //
 namespace base {
 //
@@ -24,6 +24,7 @@ class Thread {
       if (0 == done) {
         return (*_result);
       }
+      return done;
   }
   //
  protected:
