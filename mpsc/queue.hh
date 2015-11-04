@@ -24,14 +24,14 @@ template<typename Value>
 class Queue {
  public:
   Queue()
-      : _head(&_stub)
-      , _tail(&_stub) {
+      : _head(static_cast<Value*>(&_stub))
+      , _tail(static_cast<Value*>(&_stub)) {
     // nil
   }
   //
   void Push(Value* value) {
     value->_next = nullptr;
-    Value* prev = Exchange(&_head, value);
+    Value* prev = atomic::Exchange(&_head, value);
     prev->_next = value;
   }
   //
@@ -59,7 +59,7 @@ class Queue {
       return nullptr;
     }
     //
-    Push(&_stub);
+    Push(static_cast<Value*>(&_stub));
     next = tail->_next;
     //
     if(nullptr not_eq next) {
@@ -71,7 +71,7 @@ class Queue {
   //
  protected:
  private:
-  Value _stub;
+  Node<Value> _stub;
   Value* _head;
   Value* _tail;
 };
