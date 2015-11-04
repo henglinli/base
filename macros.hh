@@ -12,9 +12,9 @@
 #endif // Align
 // __init128
 // gcc -dM -E - < /dev/null
-#ifndef __SIZEOF_INT128__
-#error "Not supported platform!"
-#else
+#if defined(__x86_64__) and defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16)
 typedef __int128_t int128_t;
 typedef __uint128_t uint128_t;
+#else
+#error "Not supported platform!"
 #endif
