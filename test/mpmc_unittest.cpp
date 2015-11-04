@@ -25,11 +25,11 @@ TEST(mpmc, PushPop) {
   }
   //
   Session* p = q.Pop();
-  EXPECT_NE(nullptr, p);
+  EXPECT_NE(static_cast<Session*>(nullptr), p);
   EXPECT_EQ(0, p->_value);
   //
   p = q.Pop();
-  EXPECT_NE(nullptr, p);
+  EXPECT_NE(static_cast<Session*>(nullptr), p);
   EXPECT_EQ(1, p->_value);
 }
 //
