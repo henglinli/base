@@ -1,0 +1,53 @@
+# -*-coding:utf-8-unix;-*-
+builddir = build
+#
+cc = cc
+cxx = c++
+ar = ar
+cflags = -O2 -Wall -Wextra -pipe
+cppflags = -Iinclude  -Ithird_party/googletest/googletest/include -Ithird_party/googletest/googletest -DGTEST_USE_OWN_TR1_UPLE=1
+cxxflags = $cflags -fno-exceptions -fno-rtti
+ldflags = -pthread
+#
+rule cxx
+     command = $cxx $cppflags $cxxflags -c $in -o $out
+     description = CXX $out
+#
+rule ar
+     command = rm -f $out && $ar crs $out $in
+     description = AR $out
+#
+rule link
+     command = $cxx $ldflags -o $out $in $libs
+     description = LINK $out
+#
+rule exe
+     command = $cxx $cppflags $cxxflags $ldflags $libs $in -o $out
+     description = EXE $out
+#
+rule test
+      command = ./$in
+#
+build $builddir/gtest-all.o: cxx third_party/googletest/googletest/src/gtest-all.cc
+#
+build $builddir/gtest-main.o: cxx third_party/googletest/googletest/src/gtest_main.cc
+#
+build $builddir/libgtest.a: ar $builddir/gtest-all.o $builddir/gtest-main.o
+#
+build $builddir/mpmc_unittest: exe test/mpmc_unittest.cpp | $builddir/libgtest.a
+      libs = -L$builddir -lgtest
+#
+build mpmc_unittest: test $builddir/mpmc_unittest
+#
+build $builddir/mpsc_unittest: exe test/mpsc_unittest.cpp | $builddir/libgtest.a
+      libs = -L$builddir -lgtest
+#
+build mpsc_unittest: test $builddir/mpsc_unittest
+#
+build $builddir/thread_unittest: exe test/thread_unittest.cpp | $builddir/libgtest.a
+      libs = -L$builddir -lgtest
+#
+build thread_unittest: test $builddir/thread_unittest
+#
+build all: phony mpmc_unittest mpsc_unittest thread_unittest
+

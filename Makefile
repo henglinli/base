@@ -28,7 +28,7 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 RAGEL = ragel
 CXXFLAGS += -Wall -Wextra -fno-exceptions -fno-rtti
 LDFLAGS += -pthread
-CPPFLAGS += -I.
+CPPFLAGS += -Iinclude
 LOADLIBES += gtest_main.a
 LDLIBS +=
 #
