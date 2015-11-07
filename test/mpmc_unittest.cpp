@@ -1,9 +1,11 @@
 // -*-coding:utf-8-unix;-*-
 #include "gtest/gtest.h"
 #include "mpmc/queue.hh"
-
+//
+using namespace NAMESPACE;
+//
 class Session
-    : public base::mpmc::Node<Session> {
+    : public mpmc::Node<Session> {
  public:
   int _value;
 };
@@ -11,7 +13,7 @@ class Session
 const size_t kSize(10);
 //
 TEST(mpmc, PushPop) {
-  base::mpmc::Queue<Session> q;
+  mpmc::Queue<Session> q;
   Session s[kSize];
   for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
     s[i]._value = i;

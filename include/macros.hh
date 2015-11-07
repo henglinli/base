@@ -1,5 +1,9 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
+// namespace
+#ifndef NAMESPACE
+#define NAMESPACE rt
+#endif
 // nullptr
 #ifndef nullptr
 #include <cstddef>
@@ -12,9 +16,14 @@
 #endif // Align
 // __init128
 // gcc -dM -E - < /dev/null
-#if defined(__x86_64__) and defined(__GCC_HAVE_SYNC_COMPARE_AND_SWAP_16)
+#ifndef GCC_VERSION
+#define GCC_VERSION (__GNUC__ * 10000           \
+                     + __GNUC_MINOR__ * 100     \
+                     + __GNUC_PATCHLEVEL__)
+#endif
+#if defined(__x86_64__)
 typedef __int128_t int128_t;
 typedef __uint128_t uint128_t;
 #else
-#error "Not supported platform!"
+#error "Only support X86_64 platform!"
 #endif

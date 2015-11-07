@@ -2,6 +2,8 @@
 #include "gtest/gtest.h"
 #include "thread.hh"
 //
+using namespace NAMESPACE;
+//
 class Task {
  public:
   explicit Task(int value)
@@ -17,7 +19,7 @@ class Task {
 };
 //
 TEST(thread, task) {
-  base::Thread<Task> thread;
+  Thread<Task> thread;
   Task task(1);
   int done(-1);
   done = thread.Run(&task);

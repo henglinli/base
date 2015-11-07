@@ -4,7 +4,7 @@
 #include "macros.hh"
 #include "atomic.hh"
 
-namespace base {
+namespace NAMESPACE {
 namespace mpmc {
 // copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.h
 //
@@ -27,7 +27,7 @@ class Queue {
  public:
   Queue()
       : _head(static_cast<Value*>(&_node)) {
-    _tail._node = static_cast<Value*>(&_node);
+    _tail._ptr = static_cast<Value*>(&_node);
   }
   //
   void PushSingle(Value* value) {
@@ -38,7 +38,7 @@ class Queue {
   }
   //
   void Push(Value* value) {
-    Value* prev = atomic::Exchange(&_head, value);
+    Value* prev = NAMESPACE::Exchange(&_head, value);
     prev->_next = value;
   }
   //
@@ -47,12 +47,12 @@ class Queue {
     Value* next;
     //
     cmp._aba = _tail._aba;
-    cmp._node = _tail._node;
+    cmp._ptr = _tail._ptr;
     //
     do {
       // Get the next node rather than the tail.
       // The tail is either a stub or has already been consumed.
-      next = cmp._node->_next;
+      next = cmp._ptr->_next;
       // Bailout if we have no next node.
       if (nullptr == next) {
         return nullptr;
@@ -60,8 +60,8 @@ class Queue {
       // Make the next node the tail, incrementing the aba counter.
       // If this fails, cmp becomes the new tail and we retry the loop.
       xchg._aba = cmp._aba + 1;
-      xchg._node = next;
-    } while(not atomic::BoolComapreAndSwap(&(_tail._data), cmp._data, xchg._data));
+      xchg._ptr = next;
+    } while(not NAMESPACE::BoolComapreAndSwap(&(_tail._data), cmp._data, xchg._data));
     return next;
   }
   //
@@ -72,7 +72,7 @@ class Queue {
         union {
           struct {
             uint64_t _aba;
-            Value* _node;
+            Value* _ptr;
           };
           uint128_t _data;
         };

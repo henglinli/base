@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include "macros.hh"
 //
-namespace base {
+namespace NAMESPACE {
 //
-class Task {
+class _Task {
  public:
   virtual int* Loop() = 0;
 };
@@ -39,4 +39,4 @@ class Thread {
   pthread_attr_t _attr;
 }; // class Thread
 //
-} // namespace base
+} // namespace NAMESPACE

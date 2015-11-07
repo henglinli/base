@@ -1,9 +1,10 @@
 // -*-coding:utf-8-unix;-*-
 #include "gtest/gtest.h"
 #include "mpsc/queue.hh"
-
+//
+using namespace NAMESPACE;
 class Session
-    : public base::mpsc::Node<Session> {
+    : public mpsc::Node<Session> {
  public:
   int _value;
 };
@@ -11,7 +12,7 @@ class Session
 const size_t kSize(10);
 //
 TEST(mpsc, Push) {
-  base::mpsc::Queue<Session> q;
+  mpsc::Queue<Session> q;
   Session s[kSize];
   for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
     s[i]._value = i;
@@ -20,7 +21,7 @@ TEST(mpsc, Push) {
 }
 //
 TEST(mpsc, Pop) {
-  base::mpsc::Queue<Session> q;
+  mpsc::Queue<Session> q;
   Session s[kSize];
   Session* p = q.Pop();
   EXPECT_EQ(static_cast<Session*>(nullptr), p);

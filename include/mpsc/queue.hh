@@ -3,7 +3,7 @@
 #include "macros.hh"
 #include "atomic.hh"
 
-namespace base {
+namespace NAMESPACE {
 namespace mpsc {
 // www.1024cores.net version lockfree queue
 template<typename Value>
@@ -31,7 +31,7 @@ class Queue {
   //
   void Push(Value* value) {
     value->_next = nullptr;
-    Value* prev = atomic::Exchange(&_head, value);
+    Value* prev = NAMESPACE::Exchange(&_head, value);
     prev->_next = value;
   }
   //
@@ -76,4 +76,4 @@ class Queue {
   Value* _tail;
 };
 } // namespace mpsc
-} // namespace mpsc
+} // namespace NAMSPACE

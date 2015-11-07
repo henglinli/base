@@ -1,8 +1,8 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
+#include "macros.hh"
 //
-namespace base {
-namespace atomic {
+namespace NAMESPACE {
 // cas
 template <typename Integer>
 inline bool BoolComapreAndSwap(Integer* ptr,
@@ -88,5 +88,4 @@ inline Integer Exchange(Integer* ptr, Integer value) {
   return __sync_lock_test_and_set(ptr, value);
 }
 //
-} // namespace atomic
-} // namespace base
+} // namespace NAMESPACE
