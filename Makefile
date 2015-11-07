@@ -17,9 +17,6 @@
 # Remember to tweak this if you move this file.
 GTEST_DIR = third_party/googletest/googletest
 
-# Where to find user code.
-USER_DIR = ../samples
-
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
@@ -27,7 +24,7 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 #
 ASAN += -fsanitize=address -fno-omit-frame-pointer
 RAGEL = ragel
-CFLAGS += -Wall -Wextra -march=native
+CFLAGS += -Wall -Wextra -march=native $(ASAN)
 CXXFLAGS += $(CFLAGS) -fno-exceptions -fno-rtti
 LDFLAGS += -pthread
 CPPFLAGS += -Iinclude
@@ -66,11 +63,11 @@ GTEST_SRCS_ = $(wildcard $(GTEST_DIR)/src/*.cc) $(wildcard $(GTEST_DIR)/src/*.h)
 # compiles fast and for ordinary users its source rarely changes.
 gtest-all.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc
+	    $(GTEST_DIR)/src/gtest-all.cc
 
 gtest_main.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
+	    $(GTEST_DIR)/src/gtest_main.cc
 
 gtest.a : gtest-all.o
 	$(AR) $(ARFLAGS) $@ $^

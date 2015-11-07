@@ -12,8 +12,16 @@ class Session
 //
 const size_t kSize(10);
 //
+TEST(mpmc, Pop) {
+  mpmc::Queue<Session> q;
+  Session* p = q.Pop();
+  EXPECT_EQ(static_cast<Session*>(nullptr), p);
+}
+//
 TEST(mpmc, PushPop) {
   mpmc::Queue<Session> q;
+  Session* p(nullptr);
+  //
   Session s[kSize];
   for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
     s[i]._value = i;
@@ -26,7 +34,7 @@ TEST(mpmc, PushPop) {
     q.Push(s1+i);
   }
   //
-  Session* p = q.Pop();
+  p = q.Pop();
   EXPECT_NE(static_cast<Session*>(nullptr), p);
   EXPECT_EQ(0, p->_value);
   //
@@ -34,21 +42,4 @@ TEST(mpmc, PushPop) {
   EXPECT_NE(static_cast<Session*>(nullptr), p);
   EXPECT_EQ(1, p->_value);
 }
-//
-#if 0
-TEST(mpsc, Pop) {
-  base::mpsc::Queue<Session> q;
-  Session s[kSize];
-  Session* p = q.Pop();
-  EXPECT_EQ(static_cast<Session*>(nullptr), p);
-  for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
-    s[i]._value = i;
-    q.Push(s+i);
-  }
-  //
-  for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
-    p = q.Pop();
-    EXPECT_NE(static_cast<Session*>(nullptr), p);
-  }
-}
-#endif
+

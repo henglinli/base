@@ -6,7 +6,7 @@
 
 namespace NAMESPACE {
 namespace mpmc {
-// copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.h
+// copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.c
 //
 template<typename Value>
 class Node {
