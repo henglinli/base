@@ -26,7 +26,8 @@ USER_DIR = ../samples
 CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 #
 RAGEL = ragel
-CXXFLAGS += -Wall -Wextra -fno-exceptions -fno-rtti
+CFLAGS += -Wall -Wextra -march=native -O2
+CXXFLAGS += $(CFLAGS) -fno-exceptions -fno-rtti
 LDFLAGS += -pthread
 CPPFLAGS += -Iinclude
 LOADLIBES += gtest_main.a
