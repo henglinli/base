@@ -6,12 +6,13 @@
 //
 namespace NAMESPACE {
 //
+template<typename Value>
 class _Task {
  public:
-  virtual int* Loop() = 0;
+  virtual Value* Loop() = 0;
 };
 //
-template<typename Task>
+template<typename Task, typename Value>
 class Thread {
  public:
   int Run(Task* task) {
@@ -19,12 +20,22 @@ class Thread {
                           ThreadMain, static_cast<void*>(task));
   }
   //
-  int Join() {
+  int Join(Value* ptr) {
     int done = pthread_join(_tid, reinterpret_cast<void**>(&_result));
-      if (0 == done) {
-        return (*_result);
+      if (0 not_eq done) {
+        return done;
       }
+      *ptr = *_result;
       return done;
+  }
+  //
+  int RunBackgroud(Task* task) {
+    int done = pthread_create(&_tid, nullptr,
+                              ThreadMain, static_cast<void*>(task));
+    if (0 not_eq done) {
+      return done;
+    }
+    return pthread_detach(_tid);
   }
   //
  protected:
@@ -34,9 +45,8 @@ class Thread {
   }
   //
  private:
-  int* _result;
+  Value* _result;
   pthread_t _tid;
-  pthread_attr_t _attr;
 }; // class Thread
 //
 } // namespace NAMESPACE
