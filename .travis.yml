@@ -4,11 +4,9 @@ language: cpp
 
 compiler:
   - gcc
-  - clang
 
 script:
   - make
 
 os:
   - linux
-  - osx
