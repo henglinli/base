@@ -1,9 +1,6 @@
 // -*- coding:utf-8-unix; -*-
 #include <stdint.h>
 #include "macros.hh"
-#ifdef __clang__
-#include <x86intrin.h>
-#endif
 //
 // http://www.1024cores.net/home/lock-free-algorithms/tricks/per-processor-data
 //
