@@ -1,11 +1,6 @@
 // -*- coding:utf-8-unix; -*-
 #include <stdint.h>
 #include "macros.hh"
-#ifdef __clang__
-#include <x86intrin.h>
-#else
-#define __rdtscp __builtin_ia32_rdtscp
-#endif // __clang__
 //
 // http://www.1024cores.net/home/lock-free-algorithms/tricks/per-processor-data
 //
@@ -14,17 +9,17 @@ namespace NAMESPACE {
 class Processor {
  public:
   static inline uint32_t Current() {
-    _timestap = __rdtscp(&_number);
+    _timestap = __builtin_ia32_rdtscp(&_number);
     return _number;
   }
   //
   static inline uint32_t Timestap() {
-    _timestap = __rdtscp(&_number);
+    _timestap = __builtin_ia32_rdtscp(&_number);
     return _timestap;
   }
   //
   static inline uint32_t Rdscp(uint32_t* cpu) {
-    return __rdtscp(cpu);
+    return __builtin_ia32_rdtscp(cpu);
   }
  protected:
  private:
