@@ -7,7 +7,7 @@
 namespace NAMESPACE {
 //
 template<typename Value>
-class _Task {
+class _Worker {
  public:
   virtual Value* Loop() = 0;
 };

@@ -47,6 +47,8 @@ all : gtest_main.a $(TESTS)
 	./test/mpsc_unittest.exe
 	./test/mpmc_unittest.exe
 	./test/thread_unittest.exe
+	./test/worker_unittest.exe
+	./test/scheduler_unittest.exe
 	./test/processor_unittest.exe
 #
 clean :

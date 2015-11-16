@@ -27,3 +27,14 @@ typedef __uint128_t uint128_t;
 #else
 #error "Only support X86_64 platform!"
 #endif
+// do nothing
+template<typename T>
+void DoNothing(T) {
+  // nil
+}
+//
+template<typename T1, typename T2>
+void DoNothing(T1, T2) {
+  // nil
+}
+
