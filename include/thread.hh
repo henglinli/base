@@ -41,7 +41,7 @@ class Thread {
   static void Yield() {
 #if __APPLE__
     pthread_yield_np();
-#elif __LINUX__
+#elif __linux__
     pthread_yield();
 #else
 #error NOT supported platform!
