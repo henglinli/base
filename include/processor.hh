@@ -1,4 +1,5 @@
 // -*- coding:utf-8-unix; -*-
+#pragma once
 #include <stdint.h>
 #include "mpmc/queue.hh"
 //

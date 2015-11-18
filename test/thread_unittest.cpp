@@ -12,6 +12,7 @@ class Task {
   }
   //
   Value* Loop() {
+    Thread<Task, int>::Yield();
     return &_value;
   }
   //

@@ -38,6 +38,16 @@ class Thread {
     return pthread_detach(_tid);
   }
   //
+  static void Yield() {
+#if __APPLE__
+    pthread_yield_np();
+#elif __LINUX__
+    pthread_yield();
+#else
+#error NOT supported platform!
+#endif
+  }
+  //
  protected:
   static void* ThreadMain(void* arg) {
     Task* task = static_cast<Task*>(arg);
