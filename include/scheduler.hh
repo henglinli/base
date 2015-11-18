@@ -63,6 +63,7 @@ class Scheduler {
           task = _scheduler->Steal();
         }
       } // while
+      return nullptr;
     }
     //
     inline void Add(Task* task) {
