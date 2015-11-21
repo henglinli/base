@@ -29,6 +29,10 @@ class Thread {
       return done;
   }
   //
+  inline int Cancel() {
+    return pthread_cancel(_tid);
+  }
+  //
   int RunBackgroud(Task* task) {
     int done = pthread_create(&_tid, nullptr,
                               ThreadMain, static_cast<void*>(task));

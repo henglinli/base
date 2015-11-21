@@ -38,4 +38,7 @@ TEST(thread, backgroud_task) {
   int done(-1);
   done = thread.RunBackgroud(&task);
   ASSERT_EQ(0, done);
+  done = thread.Cancel();
+  EXPECT_EQ(0, done);
 }
+//
