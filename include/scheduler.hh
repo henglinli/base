@@ -7,7 +7,7 @@
 //
 namespace NAMESPACE {
 //
-const size_t kDefaultMaxCPU(32);
+const uint32_t kDefaultMaxCPU(32);
 //
 class _Task
     : public mpmc::Node<_Task> {
@@ -15,7 +15,7 @@ class _Task
   virtual bool DoWork() = 0;
 };
 //
-template<typename Task, size_t kMaxCPU = kDefaultMaxCPU>
+template<typename Task, uint32_t kMaxCPU = kDefaultMaxCPU>
 class Scheduler {
  public:
   //
@@ -74,6 +74,7 @@ class Scheduler {
     //
     int done(0);
     for(size_t i(0); i < threads; ++i) {
+      _last_victim[i] = i;
       done = _thread[i].Run(_worker + i);
       // create worker thread failed should canncel all
       if (0 not_eq done) {
@@ -88,7 +89,25 @@ class Scheduler {
   //
   friend class Worker;
   Task* Steal() {
-    return nullptr;
+    uint32_t which = Processor<Task>::Current();
+    uint32_t victim = Self::ChooseVictim(which);
+    Task* task = _worker[victim].Steal();
+    return task;
+  }
+  //
+  uint32_t ChooseVictim(uint32_t which) {
+    uint32_t victim = _last_victim[which];
+    if (++victim == _worker_threads) {
+      victim = 0;
+    }
+    for (; victim < _worker_threads; ++victim) {
+      if (which == victim) {
+        continue;
+      }
+      _last_victim[which] = victim;
+      break;
+    }
+    return victim;
   }
   //
  private:
@@ -99,6 +118,10 @@ class Scheduler {
     inline void Init(Self* scheduler) {
       _status = kInit;
       _scheduler = scheduler;
+    }
+    //
+    inline Task* Steal() {
+      return _processor.Pop();
     }
     //
     Value* Loop() {
@@ -113,7 +136,7 @@ class Scheduler {
             if (kStop == _status) {
               return &_status;
             }
-            Thread<Worker, Value>::Yield();                        
+            Thread<Worker, Value>::Yield();
             continue;
           }
           //
@@ -146,7 +169,8 @@ class Scheduler {
   //
   Worker _worker[kMaxCPU];
   Thread<Worker, Value> _thread[kMaxCPU];
-  size_t _worker_threads;
+  uint32_t _last_victim[kMaxCPU];
+  uint32_t _worker_threads;
 }; // class Scheduler
 //
 } // namespace NAMESPACE
