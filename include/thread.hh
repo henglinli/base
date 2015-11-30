@@ -15,27 +15,27 @@ class _Worker {
 template<typename Task, typename Value>
 class Thread {
  public:
-  int Run(Task* task) {
+  int Run(Task& task) {
     return pthread_create(&_tid, nullptr,
-                          ThreadMain, static_cast<void*>(task));
+                          ThreadMain, static_cast<void*>(&task));
   }
   //
   int Join(Value* ptr) {
     int done = pthread_join(_tid, reinterpret_cast<void**>(&_result));
-      if (0 not_eq done) {
-        return done;
-      }
-      *ptr = *_result;
+    if (0 not_eq done) {
       return done;
+    }
+    *ptr = *_result;
+    return done;
   }
   //
   inline int Cancel() {
     return pthread_cancel(_tid);
   }
   //
-  int RunBackgroud(Task* task) {
+  int RunBackgroud(Task& task) {
     int done = pthread_create(&_tid, nullptr,
-                              ThreadMain, static_cast<void*>(task));
+                              ThreadMain, static_cast<void*>(&task));
     if (0 not_eq done) {
       return done;
     }

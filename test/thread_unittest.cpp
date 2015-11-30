@@ -24,7 +24,7 @@ TEST(thread, task) {
   Thread<Task<int>, int> thread;
   Task<int> task(1);
   int done(-1);
-  done = thread.Run(&task);
+  done = thread.Run(task);
   ASSERT_EQ(0, done);
   int value(0);
   done = thread.Join(&value);
@@ -36,7 +36,7 @@ TEST(thread, backgroud_task) {
   Thread<Task<int>, int> thread;
   Task<int> task(1);
   int done(-1);
-  done = thread.RunBackgroud(&task);
+  done = thread.RunBackgroud(task);
   ASSERT_EQ(0, done);
   done = thread.Cancel();
   EXPECT_EQ(0, done);
