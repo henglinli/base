@@ -28,7 +28,7 @@ class Worker {
     }
   }
   //
-  inline Status Status() {
+  inline Status Stat() {
     return _status;
   }
   //
@@ -39,7 +39,7 @@ class Worker {
  protected:
   //
  private:
-  enum Status _status;
+  Status _status;
   Scheduler* _scheduler;
   Processor<Task> _processor;
 };
@@ -63,7 +63,7 @@ Status* Worker<Scheduler, Task>::Loop() {
         if (kStop == _status) {
           break;
         }
-        Thread<Worker, enum Status>::Yield();
+        Thread<Worker, Status>::Yield();
         continue;
       }
       //
