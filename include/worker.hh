@@ -28,10 +28,6 @@ class Worker {
     }
   }
   //
-  inline Status Stat() {
-    return _status;
-  }
-  //
   inline void Stop() {
     _status = kStop;
   }

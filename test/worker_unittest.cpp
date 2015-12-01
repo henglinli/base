@@ -33,8 +33,6 @@ TEST(Worker, api) {
   Worker<Scheduler, Task> worker;
   Scheduler scheduler;
   worker.Init(scheduler);
-  Status s = worker.Stat();
-  EXPECT_EQ(kReady, s);
   Task t[kTasks];
   for (size_t i(0); i < kTasks; ++i) {
     worker.Add(t + i);
@@ -43,8 +41,6 @@ TEST(Worker, api) {
   EXPECT_EQ(0, done);
   sleep(1);
   worker.Stop();
-  s = worker.Stat();
-  EXPECT_EQ(kStop, s);
   Status status(kUnkown);
   done = thread.Join(&status);
   EXPECT_EQ(0, done);
