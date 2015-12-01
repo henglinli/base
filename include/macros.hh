@@ -27,6 +27,10 @@ typedef __uint128_t uint128_t;
 #else
 #error "Only support X86_64 platform!"
 #endif
+//
+#define DISALLOW_COPY_AND_ASSIGN(TypeName) \
+  TypeName(const TypeName&);               \
+  void operator=(const TypeName&) 
 // do nothing
 template<typename T>
 void DoNothing(T) {

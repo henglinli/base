@@ -1,6 +1,7 @@
 // -*- coding:utf-8-unix; -*-
 #pragma once
 #include <stdint.h>
+#include "status.hh"
 #include "processor.hh"
 #include "thread.hh"
 //
@@ -10,16 +11,8 @@ template<typename Scheduler, typename Task>
 class Worker {
  public:
   //
-  typedef typename Scheduler::Value Value;
-  //
-  enum Status {
-    kInit = 0,
-    kStop = 1,
-    kAbort = 2
-  };
-  //
   inline void Init(Scheduler& scheduler) {
-    _status = kInit;
+    _status = kReady;
     _scheduler = &scheduler;
   }
   //
@@ -27,7 +20,7 @@ class Worker {
     return _processor.Pop();
   }
   //
-  Value* Loop(); 
+  Status* Loop();
   //
   inline void Add(Task* task) {
     if (kInit == _status) {
@@ -35,40 +28,42 @@ class Worker {
     }
   }
   //
-  inline void Signal(int status) {
-    _status = status;
+  inline Status Status() {
+    return _status;
   }
   //
   inline void Stop() {
     _status = kStop;
   }
   //
-  inline void Abort() {
-    _status = kAbort;
-  }
-  //
  protected:
   //
  private:
+  enum Status _status;
   Scheduler* _scheduler;
   Processor<Task> _processor;
-  Value _status;
 };
 //
 template <typename Scheduler, typename Task>
-typename Worker<Scheduler, Task>::Value* Worker<Scheduler, Task>::Loop() {
+Status* Worker<Scheduler, Task>::Loop() {
+  if (kReady not_eq _status) {
+    _status = kInit;
+    return &_status;
+  }
+  //
   while(true) {
     if(kAbort == _status) {
-      return &_status;
+      break;
     }
+    //
     Task* task = _processor.Pop();
     if (nullptr == task) {
       task = _scheduler->Steal();
       if (nullptr == task) {
         if (kStop == _status) {
-          return &_status;
+          break;
         }
-        Thread<Worker, Value>::Yield();
+        Thread<Worker, enum Status>::Yield();
         continue;
       }
       //
@@ -78,7 +73,7 @@ typename Worker<Scheduler, Task>::Value* Worker<Scheduler, Task>::Loop() {
       }
     }
   } // while
-  return nullptr;
+  return &_status;
 }
 //
 } // namespace NAMESPACE

@@ -18,11 +18,8 @@ class Scheduler {
  public:
   //
   typedef Scheduler<Task, kMaxCPU> Self;
-  typedef int Value;
   //
   static bool Start(Self& scheduler, size_t threads);
-  //
-  void Abort();
   //
   void Stop();
   //
@@ -44,49 +41,36 @@ class Scheduler {
  private:
   //
   Worker<Self, Task> _worker[kMaxCPU];
-  Thread<Worker<Self, Task>, Value> _thread[kMaxCPU];
+  Thread<Worker<Self, Task>, Status> _thread[kMaxCPU];
   uint32_t _last_victim[kMaxCPU];
   uint32_t _worker_threads;
 }; // class Scheduler
 //
 template <typename Task, uint32_t kMaxCPU>
 bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
+  // should init worker first
+  scheduler.InitWorker(scheduler);
+  //
   bool done(false);
   done = scheduler.StartWorkerThread(threads);
   if (not done) {
     return false;
   }
   //
-  scheduler.InitWorker(scheduler);
   return done;
 }
 //
 template <typename Task, uint32_t kMaxCPU>
-void Scheduler<Task, kMaxCPU>::Abort() {
-  Value tmp;
-  int done(0);
-  size_t i(0);
-  for(i = 0; i < _worker_threads; ++i) {
-    _worker[i].Abort();
-  }
-  for(i = 0; i < _worker_threads; ++i) {
-    done = _thread[i].Join(&tmp);
-    if (0 not_eq done) {
-      _thread[i].Cancel();
-    }
-  }
-}
-//
-template <typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Stop() {
-  Value tmp;
+  Status status;
   int done(0);
   size_t i(0);
   for(i = 0; i < _worker_threads; ++i) {
     _worker[i].Stop();
   }
+  //
   for(i = 0; i < _worker_threads; ++i) {
-    done = _thread[i].Join(&tmp);
+    done = _thread[i].Join(&status);
     if (0 not_eq done) {
       _thread[i].Cancel();
     }
