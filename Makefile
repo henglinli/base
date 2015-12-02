@@ -25,7 +25,7 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 ASAN += -fsanitize=address -fno-omit-frame-pointer
 RAGEL = ragel
 CFLAGS += -Wall -Wextra -march=native
-CXXFLAGS += $(CFLAGS) -fno-exceptions -fno-rtti
+CXXFLAGS += $(CFLAGS) -fno-exceptions -fno-rtti $(ASAN)
 LDFLAGS += -pthread
 CPPFLAGS += -Iinclude
 LOADLIBES += gtest_main.a
@@ -44,6 +44,7 @@ GTEST_HEADERS = $(wildcard $(GTEST_DIR)/include/gtest/*.h $(GTEST_DIR)/include/g
 # House-keeping build targets.
 
 all : gtest_main.a $(TESTS)
+	./test/context_unittest.exe
 	./test/mpsc_unittest.exe
 	./test/mpmc_unittest.exe
 	./test/thread_unittest.exe
