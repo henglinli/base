@@ -7,7 +7,6 @@ using namespace NAMESPACE;
 struct Task
     : public Context<Task, 128*1024> {
   void Run(){
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //

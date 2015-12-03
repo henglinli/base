@@ -19,6 +19,8 @@ class Scheduler {
   //
   typedef Scheduler<Task, kMaxCPU> Self;
   //
+  Scheduler();
+  //
   static bool Start(Self& scheduler, size_t threads);
   //
   void Stop();
@@ -46,7 +48,16 @@ class Scheduler {
   uint32_t _worker_threads;
 }; // class Scheduler
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
+Scheduler<Task, kMaxCPU>::Scheduler()
+    : _worker()
+    , _thread()
+    , _last_victim()
+    , _worker_threads(0) {
+  // nil
+}
+//
+template<typename Task, uint32_t kMaxCPU>
 bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
   // should init worker first
   scheduler.InitWorker(scheduler);
@@ -60,7 +71,7 @@ bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
   return done;
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Stop() {
   Status status;
   int done(0);
@@ -77,7 +88,7 @@ void Scheduler<Task, kMaxCPU>::Stop() {
   }
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Add(Task* task) {
   if (nullptr not_eq task) {
     uint32_t which = Processor<Task>::Current();
@@ -85,14 +96,14 @@ void Scheduler<Task, kMaxCPU>::Add(Task* task) {
   }
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::InitWorker(Self& scheduler) {
   for(size_t i(0); i < _worker_threads; ++i) {
     _worker[i].Init(scheduler);
   }
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 bool Scheduler<Task, kMaxCPU>::StartWorkerThread(size_t threads) {
   _worker_threads = threads < kMaxCPU ? threads : kMaxCPU;
   //
@@ -111,7 +122,7 @@ bool Scheduler<Task, kMaxCPU>::StartWorkerThread(size_t threads) {
   return true;
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 Task* Scheduler<Task, kMaxCPU>::Steal() {
   uint32_t which = Processor<Task>::Current();
   uint32_t victim = Self::ChooseVictim(which);
@@ -119,7 +130,7 @@ Task* Scheduler<Task, kMaxCPU>::Steal() {
   return task;
 }
 //
-template <typename Task, uint32_t kMaxCPU>
+template<typename Task, uint32_t kMaxCPU>
 uint32_t Scheduler<Task, kMaxCPU>::ChooseVictim(uint32_t which) {
   uint32_t victim = _last_victim[which];
   if (++victim == _worker_threads) {
