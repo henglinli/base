@@ -40,6 +40,7 @@ class Context {
 //
 template<typename Task, size_t kStackSize>
 bool Context<Task, kStackSize>::Init(Context& context) {
+  context._stack[sizeof(context._stack) - 1] = 0;
   typedef Context<Task, kStackSize> Self;
   ucontext_t initial_context;
   int done = getcontext(&initial_context);
