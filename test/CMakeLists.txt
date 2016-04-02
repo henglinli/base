@@ -1,4 +1,10 @@
-add_executable(context_unittest context_unittest.cpp)
-target_link_libraries(context_unittest gtest gtest_main)
-add_test(test_context context_unittest)
+function(build_and_test NAME)
+  add_executable(${NAME} ${NAME}.cpp)
+  target_link_libraries(${NAME} gtest gtest_main)
+  add_test(test_${NAME} ${NAME})
+endfunction(build_and_test)
 #
+set(TESTS context_unittest mpsc_unittest mpmc_unittest thread_unittest worker_unittest scheduler_unittest processor_unittest)
+foreach(TEST ${TESTS})
+  build_and_test(${TEST})
+endforeach()

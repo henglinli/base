@@ -11,4 +11,3 @@ script:
 
 os:
   - linux
-  - osx
