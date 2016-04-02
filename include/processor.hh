@@ -1,5 +1,6 @@
 // -*- coding:utf-8-unix; -*-
 #pragma once
+#include <x86intrin.h>
 #include <stdint.h>
 #include "mpmc/queue.hh"
 //
@@ -11,17 +12,17 @@ template<typename Task>
 class Processor {
  public:
   static inline uint32_t Current() {
-    _timestap = __builtin_ia32_rdtscp(&_number);
+    _timestap = __rdtscp(&_number);
     return _number;
   }
   //
   static inline uint32_t Timestap() {
-    _timestap = __builtin_ia32_rdtscp(&_number);
+    _timestap = __rdtscp(&_number);
     return _timestap;
   }
   //
   static inline uint32_t Rdscp(uint32_t* cpu) {
-    return __builtin_ia32_rdtscp(cpu);
+    return __rdtscp(cpu);
   }
   //
   inline void Push(Task* task) {

@@ -24,7 +24,7 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include -DGTEST_USE_OWN_TR1_UPLE=1
 #
 ASAN += -fsanitize=address -fno-omit-frame-pointer
 RAGEL = ragel
-CFLAGS += -pipe -Wall -Wextra -march=native
+CFLAGS += -pipe -Wall -Wextra -march=native -mcx16
 CXXFLAGS += $(CFLAGS) -fno-exceptions -fno-rtti #$(ASAN)
 LDFLAGS += -pthread
 CPPFLAGS += -Iinclude
