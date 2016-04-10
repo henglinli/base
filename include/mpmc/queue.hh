@@ -26,7 +26,9 @@ template<typename Value>
 class Queue {
  public:
   Queue()
-      : _head(static_cast<Value*>(&_node)) {
+    : _node()
+    , _head(static_cast<Value*>(&_node))
+    , _tail() {
     _tail._aba = 0;
     _tail._ptr = static_cast<Value*>(&_node);
   }

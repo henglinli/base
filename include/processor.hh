@@ -11,6 +11,12 @@ namespace NAMESPACE {
 template<typename Task>
 class Processor {
  public:
+  //
+  Processor()
+    : _task_queue() {
+    //
+  }
+  //
   static inline uint32_t Current() {
     _timestap = __rdtscp(&_number);
     return _number;

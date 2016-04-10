@@ -7,6 +7,10 @@ using namespace NAMESPACE;
 class Session
     : public mpmc::Node<Session> {
  public:
+  Session()
+    : _value(0) {
+    //
+  }
   int _value;
 };
 //

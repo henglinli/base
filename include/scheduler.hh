@@ -7,11 +7,13 @@ namespace NAMESPACE {
 //
 const uint32_t kDefaultMaxCPU(32);
 //
+/*
 class _Task
     : public mpmc::Node<_Task> {
  public:
   virtual bool DoWork() = 0;
 };
+*/
 //
 template<typename Task, uint32_t kMaxCPU = kDefaultMaxCPU>
 class Scheduler {

@@ -4,7 +4,7 @@ function(build_and_test NAME)
   add_test(test_${NAME} ${NAME})
 endfunction(build_and_test)
 #
-set(TESTS context_unittest mpsc_unittest mpmc_unittest thread_unittest worker_unittest scheduler_unittest processor_unittest)
+set(TESTS coroutine_unittest mpsc_unittest mpmc_unittest thread_unittest worker_unittest scheduler_unittest processor_unittest)
 foreach(TEST ${TESTS})
   build_and_test(${TEST})
 endforeach()

@@ -24,8 +24,9 @@ template<typename Value>
 class Queue {
  public:
   Queue()
-      : _head(static_cast<Value*>(&_stub))
-      , _tail(static_cast<Value*>(&_stub)) {
+    : _stub()
+    , _head(static_cast<Value*>(&_stub))
+    , _tail(static_cast<Value*>(&_stub)) {
     // nil
   }
   //

@@ -9,6 +9,11 @@ const size_t kMaxCPU(4);
 //
 struct Task
     : public mpmc::Node<Task> {
+  Task()
+    : _value(0) {
+    //
+  }
+  //
   int _value;
   //
   bool DoWork() {

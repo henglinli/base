@@ -11,6 +11,8 @@ template<typename Scheduler, typename Task>
 class Worker {
  public:
   //
+  Worker();
+  //
   inline void Init(Scheduler& scheduler) {
     _status = kReady;
     _scheduler = &scheduler;
@@ -40,7 +42,15 @@ class Worker {
   Processor<Task> _processor;
 };
 //
-template <typename Scheduler, typename Task>
+template<typename Scheduler, typename Task>
+Worker<Scheduler, Task>::Worker()
+    : _status(kUnkown)
+    , _scheduler(nullptr)
+    , _processor() {
+  //
+}
+//
+template<typename Scheduler, typename Task>
 Status* Worker<Scheduler, Task>::Loop() {
   if (kReady not_eq _status) {
     _status = kInit;
