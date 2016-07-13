@@ -26,7 +26,6 @@ TEST(context, api) {
   EXPECT_EQ(true, ok);
   ok = r[1].Init(w);
   EXPECT_EQ(true, ok);
-  r[0].SwitchIn();
-  r[1].SwitchIn();
+  r[0].Switch(r[1]);
 }
 

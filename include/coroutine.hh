@@ -48,29 +48,25 @@ public:
   bool Init(Task& task) {
     //
     if (nullptr == _stack) {
-      _stack = new char[kStackSize];
+      _stack = new char[kStackSize+1];
     }
+    //
     int done = getcontext(&_context);
     if (0 not_eq done) {
       return false;
     }
-    //
     _context.uc_stack.ss_sp = _stack;
     _context.uc_stack.ss_size = kStackSize;
     _context.uc_link = nullptr;
     //
-    makecontext(&_context, reinterpret_cast<void (*)()>(Self::RunTask<Task>), 1, &task);
-    done = _setjmp(_link);
-    if (0 == done) {
-      return true;
-    }
-    // longjmp to here
-    setcontext(&_context);
+    ucontext_t tmp;
+    makecontext(&_context, reinterpret_cast<void (*)()>(Self::RunTask<Task>), 3, &task, &_link, &tmp);
+    swapcontext(&tmp, &_context);
     return true;
   }
   //
-  void SwitchIn() {
-    int done = _setjmp(_link0);
+  void Switch(Coroutine& other) {
+    int done = _setjmp(other._link);
     if (0 == done) {
       _longjmp(_link, 1);
     }
@@ -78,9 +74,13 @@ public:
   //
  protected:
   template<typename Task>
-  static void RunTask(Task* task) {
+  static void RunTask(Task* task, jmp_buf *cur, ucontext_t* prv) {
+    int done = _setjmp(*cur);
+    if (0 == done) {
+      ucontext_t tmp;
+      swapcontext(&tmp, prv);
+    }
     task->Run();
-    _longjmp(_link0, 1);
   }
   //
  private:
@@ -88,8 +88,12 @@ public:
   jmp_buf _link;
   ucontext_t _context;
   static __thread jmp_buf _link0;
+  static __thread ucontext_t _context0;
 };
 template<size_t kStackSize>
 __thread jmp_buf Coroutine<kStackSize>::_link0;
+//
+template<size_t kStackSize>
+__thread ucontext_t Coroutine<kStackSize>::_context0;
 //
 } // namespace NAMESPACE
