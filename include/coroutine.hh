@@ -77,8 +77,7 @@ public:
   static void RunTask(Task* task, jmp_buf *cur, ucontext_t* prv) {
     int done = _setjmp(*cur);
     if (0 == done) {
-      ucontext_t tmp;
-      swapcontext(&tmp, prv);
+      setcontext(prv);
     }
     task->Run();
   }
@@ -87,13 +86,6 @@ public:
   char* _stack;
   jmp_buf _link;
   ucontext_t _context;
-  static __thread jmp_buf _link0;
-  static __thread ucontext_t _context0;
 };
-template<size_t kStackSize>
-__thread jmp_buf Coroutine<kStackSize>::_link0;
-//
-template<size_t kStackSize>
-__thread ucontext_t Coroutine<kStackSize>::_context0;
 //
 } // namespace NAMESPACE

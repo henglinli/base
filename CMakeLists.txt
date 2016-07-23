@@ -15,14 +15,14 @@ include_directories(
 #
 if(UNIX)
   if(APPLE)
-    set(CMAKE_CXX_FLAGS "-g -g0 -ggdb -O0 -Wall -Wextra -Weffc++ -fno-exceptions -fno-rtti -mcx16 -fsanitize=address -fno-omit-frame-pointer")
+    set(CMAKE_CXX_FLAGS "-g -ggdb -O0 -Wall -Wextra -Weffc++ -fno-exceptions -fno-rtti -mcx16 -fsanitize=address -fno-omit-frame-pointer")
     #-fno-exceptions
     set(CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++")
     #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
     add_definitions()
   else()
     #set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions -Wall -Wextra -Weffc++")
-    set(CMAKE_CXX_FLAGS "-g -ggdb -O0 -Wall -Wextra -Weffc++ -fno-exceptions -fno-rtti -mcx16")
+    set(CMAKE_CXX_FLAGS "-g -ggdb -O0 -Wall -Wextra -Weffc++ -fno-exceptions -fno-rtti -mcx16 -fsanitize=address -fno-omit-frame-pointer")
     set(CMAKE_EXE_LINKER_FLAGS "-pthread")
     add_definitions()
   endif()
