@@ -3,8 +3,6 @@
 
 runtime of cpp
 # code style
-no `new`/`delete`
-
 no `this`
 
 template only
