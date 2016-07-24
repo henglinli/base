@@ -21,11 +21,12 @@ if(UNIX)
     #set(CMAKE_EXE_LINKER_FLAGS "-static-libgcc -static-libstdc++")
     add_definitions()
   else()
-    #set(CMAKE_CXX_FLAGS "-std=c++11 -fno-exceptions -Wall -Wextra -Weffc++")
     set(CMAKE_CXX_FLAGS "-g -ggdb -O0 -Wall -Wextra -Weffc++ -fno-exceptions -fno-rtti -mcx16 -fsanitize=address -fno-omit-frame-pointer")
     set(CMAKE_EXE_LINKER_FLAGS "-pthread")
     add_definitions()
   endif()
+  # for coverage
+  set(CMAKE_CXX_FLAGS_COVERAGE "--coverage")
 endif()
 # for test
 add_subdirectory(test)
