@@ -9,15 +9,15 @@ language: cpp
 matrix:
     include:
         - compiler: gcc
-          env: COMPILER=g++ BUILD_TYPE=Coverage
+          env: BUILD_TYPE=Coverage
         - compiler: gcc
-          env: COMPILER=g++ BUILD_TYPE=Debug
+          env: BUILD_TYPE=Debug
         - compiler: gcc
-          env: COMPILER=g++ BUILD_TYPE=Release
+          env: BUILD_TYPE=Release
         - compiler: clang
-          env: COMPILER=clang++ BUILD_TYPE=Debug
+          env: BUILD_TYPE=Debug
         - compiler: clang
-          env: COMPILER=clang++ BUILD_TYPE=Release
+          env: BUILD_TYPE=Release
 
 before_script:
     - mkdir build && cd build
