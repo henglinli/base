@@ -57,6 +57,7 @@ public:
     }
     _context.uc_stack.ss_sp = _stack;
     _context.uc_stack.ss_size = kStackSize;
+    _context.uc_stack.ss_flags = 0;
     _context.uc_link = nullptr;
     //
     ucontext_t tmp;

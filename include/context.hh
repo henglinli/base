@@ -20,7 +20,7 @@ namespace NAMESPACE {
 // };
 //
 //
-template<typename Task>
+template<typename Task, size_t kStackSize>
 class Context {
  public:
  protected:
@@ -28,6 +28,7 @@ class Context {
   template<typename, size_t>
   friend class Routine;
   jmp_buf _jmpbuf;
+  ucontext_t _context;
 };
 //
 } // namespace NAMESPACE

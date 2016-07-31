@@ -1,5 +1,14 @@
 cmake_minimum_required (VERSION 2.8)
 project(runtime)
+#
+foreach(p
+    CMP0054 # CMake 3.1
+    CMP0056 # export EXE_LINKER_FLAGS to try_run
+    )
+  if(POLICY ${p})
+    cmake_policy(SET ${p} NEW)
+  endif()
+endforeach()
 # for test
 enable_testing()
 # for gtest
@@ -25,9 +34,28 @@ if(UNIX)
     set(CMAKE_EXE_LINKER_FLAGS "-pthread")
     add_definitions()
   endif()
+endif()
+# Coverage build type
+  set(CMAKE_CXX_FLAGS_COVERAGE "${CMAKE_CXX_FLAGS_DEBUG}" CACHE STRING
+    "Flags used by the C++ compiler during coverage builds."
+    FORCE)
+  set(CMAKE_EXE_LINKER_FLAGS_COVERAGE
+    "${CMAKE_EXE_LINKER_FLAGS_DEBUG}" CACHE STRING
+    "Flags used for linking binaries during coverage builds."
+    FORCE)
+  set(CMAKE_SHARED_LINKER_FLAGS_COVERAGE
+    "${CMAKE_SHARED_LINKER_FLAGS_DEBUG}" CACHE STRING
+    "Flags used by the shared libraries linker during coverage builds."
+    FORCE)
+  mark_as_advanced(
+    CMAKE_CXX_FLAGS_COVERAGE
+    CMAKE_EXE_LINKER_FLAGS_COVERAGE
+    CMAKE_SHARED_LINKER_FLAGS_COVERAGE)
+  set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING
+    "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel Coverage."
+    FORCE)
   # for coverage
   set(CMAKE_CXX_FLAGS_COVERAGE "--coverage")
-endif()
 # for test
 add_subdirectory(test)
 #
