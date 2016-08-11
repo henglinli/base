@@ -1,6 +1,7 @@
 // -*-coding:utf-8-unix;-*-
 #include "gtest/gtest.h"
 #include "coroutine.hh"
+#include "context.hh"
 //
 using namespace NAMESPACE;
 //
@@ -21,11 +22,12 @@ struct Work {
 TEST(context, api) {
   Work w;
   Task t;
+  //
   Coroutine<128*1024> r[2];
   bool ok = r[0].Init(t);
   EXPECT_EQ(true, ok);
   ok = r[1].Init(w);
   EXPECT_EQ(true, ok);
-  r[0].Switch(r[1]);
+  //r[0].Switch(r[1]);
+  //r[1].Switch(r[0]);
 }
-

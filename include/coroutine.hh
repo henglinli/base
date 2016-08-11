@@ -10,6 +10,7 @@
 #include <ucontext.h>
 #include <setjmp.h>
 #include "macros.hh"
+#include "context.hh"
 //
 namespace NAMESPACE {
 /*
@@ -62,13 +63,16 @@ public:
     //
     ucontext_t tmp;
     makecontext(&_context, reinterpret_cast<void (*)()>(Self::RunTask<Task>), 3, &task, &_link, &tmp);
+    std::cout << __func__ << " swap start\n";
     swapcontext(&tmp, &_context);
+    std::cout << __func__ << " swap done\n";
     return true;
   }
   //
   void Switch(Coroutine& other) {
     int done = _setjmp(other._link);
     if (0 == done) {
+      std::cout << __func__ << " longjmp start\n";
       _longjmp(_link, 1);
     }
   }
@@ -76,10 +80,14 @@ public:
  protected:
   template<typename Task>
   static void RunTask(Task* task, jmp_buf *cur, ucontext_t* prv) {
+    std::cout << __func__ << " setjmp start\n";
     int done = _setjmp(*cur);
     if (0 == done) {
-      setcontext(prv);
+      std::cout << __func__ << " setjmp ok\n";
+      ucontext_t tmp;
+      swapcontext(&tmp, prv);
     }
+    std::cout << __func__ << " setjmp done\n";
     task->Run();
   }
   //
