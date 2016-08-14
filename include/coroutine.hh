@@ -10,91 +10,131 @@
 #include <ucontext.h>
 #include <setjmp.h>
 #include "macros.hh"
-#include "context.hh"
+#include "list.hh"
+// split stack function
+extern "C" {
+  void __splitstack_getcontext(void *context[10]);
+  void __splitstack_setcontext(void *context[10]);
+  void *__splitstack_makecontext(size_t, void *context[10], size_t *);
+  void *__splitstack_resetcontext(void *context[10], size_t *);
+  void *__splitstack_find(void *, void *, size_t *, void **, void **, void **);
+  void __splitstack_block_signals(int *, int *);
+  void __splitstack_block_signals_context(void *context[10], int *, int *);
+}
 //
 namespace NAMESPACE {
 /*
   usage
-  struct Task {
+  struct Task: pulbic Coroutine<Task> {
     void Run() {
         // dosomething here
     }
   };
   Task t;
-  Cotoutine r;
-  r.Init(t);
-  r.SwitchIn();
 */
-const size_t kDefaultStackSize(SIGSTKSZ);
+const size_t kStackSize(SIGSTKSZ);
 //
-template<size_t kStackSize = kDefaultStackSize>
-class Coroutine {
+  class Context: public List<Context>::Node {
+  public:
+    Context() : _link(nullptr), _jmpbuf(), _stack_context() {}
+    //
+  private:
+    Context *_link;
+    jmp_buf _jmpbuf;
+    void *_stack_context[10];
+    //
+    template<typename>
+    friend class Coroutine;
+    //
+    DISALLOW_COPY_AND_ASSIGN(Context);
+  };
+  //
+  static thread_local List<Context> context_list;
+  static thread_local Context context0;
+  static thread_local Context *current(&context0);
+  //
+  template<typename Runner>
+  class Coroutine {
 public:
-  typedef Coroutine<kStackSize> Self;
   //
-  Coroutine()
-    : _stack(nullptr)
-    , _link()
-    , _context() {
-    //
-  }
-  //
-  ~Coroutine() {
-    if (nullptr not_eq _stack) {
-      delete[] _stack;
-    }
-  }
-  //
-  template<typename Task>
-  bool Init(Task& task) {
-    //
-    if (nullptr == _stack) {
-      _stack = new char[kStackSize+1];
+    Coroutine(): _context() {}
+    static bool Init(Coroutine<Runner>& coroutine) {
+      return coroutine.init(coroutine);
     }
     //
-    int done = getcontext(&_context);
-    if (0 not_eq done) {
+    [[gnu::no_split_stack]] void SwitchIn();
+    [[gnu::no_split_stack]] void SwitchOut();
+  //
+ protected:
+    [[gnu::no_split_stack]] bool init(Coroutine<Runner>& coroutine);
+  //
+  [[gnu::no_split_stack]] static void run(Runner *runner);
+  //
+ private:
+    Context _context;
+    //
+    template<typename>
+    friend class Maker;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Coroutine);
+};
+//
+  template<typename Runner>
+  void Coroutine<Runner>::run(Runner *runner) {
+    runner->Run();
+    current = runner->_context._link;
+    _longjmp(current->_jmpbuf, 1);
+  }
+  //
+  template<typename Runner>
+  bool Coroutine<Runner>::init(Coroutine<Runner>& coroutine) {
+    ucontext_t context;
+    auto done = getcontext(&context);
+    if (0 != done) {
       return false;
     }
-    _context.uc_stack.ss_sp = _stack;
-    _context.uc_stack.ss_size = kStackSize;
-    _context.uc_stack.ss_flags = 0;
-    _context.uc_link = nullptr;
+    size_t size(0);
+    context.uc_stack.ss_sp = __splitstack_makecontext(kStackSize, _context._stack_context, &size);
+    context.uc_stack.ss_size = size;
+    context.uc_stack.ss_flags = 0;
+    context.uc_link = nullptr;
     //
-    ucontext_t tmp;
-    makecontext(&_context, reinterpret_cast<void (*)()>(Self::RunTask<Task>), 3, &task, &_link, &tmp);
-    std::cout << __func__ << " swap start\n";
-    swapcontext(&tmp, &_context);
-    std::cout << __func__ << " swap done\n";
+    int block(0);
+    __splitstack_block_signals_context(_context._stack_context, &block, nullptr);
+    //
+    auto func(reinterpret_cast<void(*)()>(Coroutine<Runner>::run));
+    makecontext(&context, func, 1, &coroutine);
+    //
+    auto prev = current;
+    _context._link = prev;
+    current = &_context;
+    //
+    done = _setjmp(prev->_jmpbuf);
+    if (0 == done) {
+      setcontext(&context);
+    }
+    context_list.Append(&_context);
     return true;
   }
   //
-  void Switch(Coroutine& other) {
-    int done = _setjmp(other._link);
+  template<typename Runner>
+  void Coroutine<Runner>::SwitchIn() {
+    auto prev = current;
+    current = &_context;
+    _context._link = prev;
+    auto done = _setjmp(prev->_jmpbuf);
     if (0 == done) {
-      std::cout << __func__ << " longjmp start\n";
-      _longjmp(_link, 1);
+      _longjmp(_context._jmpbuf, 1);
     }
   }
   //
- protected:
-  template<typename Task>
-  static void RunTask(Task* task, jmp_buf *cur, ucontext_t* prv) {
-    std::cout << __func__ << " setjmp start\n";
-    int done = _setjmp(*cur);
+  template<typename Runner>
+  void Coroutine<Runner>::SwitchOut() {
+    current = _context._link;
+    auto done = _setjmp(_context._jmpbuf);
     if (0 == done) {
-      std::cout << __func__ << " setjmp ok\n";
-      ucontext_t tmp;
-      swapcontext(&tmp, prv);
+      _longjmp(current->_jmpbuf, 1);
     }
-    std::cout << __func__ << " setjmp done\n";
-    task->Run();
   }
   //
- private:
-  char* _stack;
-  jmp_buf _link;
-  ucontext_t _context;
-};
-//
 } // namespace NAMESPACE

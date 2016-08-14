@@ -103,3 +103,75 @@ static inline void ctx_switch(ctx* to, ctx* from) {
            );
 #endif
 }
+//
+struct frame {
+  uintptr_t r15, r14, r13, r12;
+  uintptr_t rbp;
+  uintptr_t rbx;
+  uintptr_t rflags;
+  uintptr_t rip;
+};
+//
+#if 1
+extern "C" void frame_switch(uintptr_t*, uintptr_t);
+__asm__ (
+         ".text\n"
+         ".p2align 4,,15\n"
+         ".globl frame_switch\n"
+         "frame_switch:\n"
+         "pushf\n"
+         "push %rbx\n"
+         "push %r12\n"
+         "push %r13\n"
+         "push %r14\n"
+         "push %r15\n"
+         "mov %rsp, (%rdi)\n"
+         "mov %rsi, %rsp\n"
+         "pop %r15\n"
+         "pop %r14\n"
+         "pop %r13\n"
+         "pop %r12\n"
+         "pop %rbp\n"
+         "pop %rbx\n"
+         "popf\n"
+         "ret\n"
+         );
+//
+#else
+static inline void frame_switch(frame **, frame *) {
+  __asm__ (
+           "pushf\n"
+           "push %rbx\n"
+           "push %r12\n"
+           "push %r13\n"
+           "push %r14\n"
+           "push %r15\n"
+           "mov %rsp, (%rdi)\n"
+           "mov %rsi, %rsp\n"
+           "pop %r15\n"
+           "pop %r14\n"
+           "pop %r13\n"
+           "pop %r12\n"
+           "pop %rbp\n"
+           "pop %rbx\n"
+           "popf\n"
+           "ret\n"
+           );
+}
+#endif
+//
+static inline frame *frame_init(void *stack, size_t stack_size) {
+  uintptr_t stack_top = reinterpret_cast<uintptr_t>(stack) + stack_size;
+  // make sure the top of the stack is 16 byte aligned for ABI compliance
+  stack_top = stack_top & ~(16-1);
+  // make sure we start the frame 8 byte unaligned (relative to the 16 byte alignment) because
+  // of the way the context switch will pop the return address off the stack. After the first
+  // context switch, this leaves the stack in unaligned relative to how a called function expects it.
+  stack_top -= 8;
+  frame *f = reinterpret_cast<frame*>(stack_top);
+  // move down a frame size and zero it out
+  f--;
+  __builtin_memset(f, 0, sizeof(*f));
+  //
+  return f;
+}

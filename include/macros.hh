@@ -4,11 +4,6 @@
 #ifndef NAMESPACE
 #define NAMESPACE rt
 #endif
-// nullptr
-#ifndef nullptr
-#include <cstddef>
-#define nullptr NULL
-#endif // nullptr
 // align
 #ifndef Align
 #define Align(Type, bytes) \
@@ -29,8 +24,8 @@ typedef __uint128_t uint128_t;
 #endif
 //
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
-  TypeName(const TypeName&);               \
-  void operator=(const TypeName&) 
+  TypeName(const TypeName&) = delete;      \
+  void operator=(const TypeName&) = delete
 // do nothing
 template<typename T>
 void DoNothing(T) {
@@ -41,4 +36,3 @@ template<typename T1, typename T2>
 void DoNothing(T1, T2) {
   // nil
 }
-
