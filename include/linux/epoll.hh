@@ -3,6 +3,7 @@
 #pragma once
 //
 #include <errno.h>
+#include <unistd.h>
 #ifdef __linux__
 #include <sys/epoll.h>
 #endif
@@ -12,15 +13,17 @@ namespace NAMESPACE {
 //
 const size_t kDefaultEvents(128);
 //
-class Epoll
-    : public NetPoll<Epoll> {
- private:
+class Epoll final: public NetPoll<Epoll> {
+public:
+  Epoll(): _fd(-1) {}
   //
-  Epoll()
-      : _fd(-1) {
-    // nil
+  ~Epoll() {
+    if (-1 not_eq _fd) {
+      close(_fd);
+    }
   }
   //
+protected:
   int init() {
     if (0 < _fd) {
       return _fd;
@@ -32,7 +35,7 @@ class Epoll
     return -errno;
   }
   //
-  int open(int fd, void* ptr) {
+  int open(int fd, void *ptr) {
     if (-1 == _fd) {
       return -1;
     }
@@ -98,7 +101,12 @@ class Epoll
     return 0;
   }
   //
+private:
   int _fd;
+  //
+  friend class NetPoll<Epoll>;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Epoll);
 };
 //
 } // namespace NAMESPACE

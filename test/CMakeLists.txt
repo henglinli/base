@@ -4,7 +4,7 @@ function(build_and_test NAME)
   add_test(test_${NAME} ${NAME})
 endfunction(build_and_test)
 #
-set(TESTS coroutine_unittest mpsc_unittest mpmc_unittest thread_unittest worker_unittest scheduler_unittest processor_unittest)
+set(TESTS netpoll coroutine mpsc mpmc thread worker scheduler processor)
 foreach(TEST ${TESTS})
   build_and_test(${TEST})
 endforeach()
@@ -52,4 +52,3 @@ if (${CMAKE_BUILD_TYPE_LOWER} MATCHES "coverage")
       "  --coverage flag: ${CXX_FLAG_COVERAGE_MESSAGE}")
   endif()
 endif()
-

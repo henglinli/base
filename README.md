@@ -4,6 +4,5 @@
 
 runtime of cpp
 # code style
-no `this`
-
-template only
+no std
+header only

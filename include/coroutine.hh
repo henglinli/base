@@ -23,20 +23,21 @@ extern "C" {
 }
 //
 namespace NAMESPACE {
-/*
-  usage
-  struct Task: pulbic Coroutine<Task> {
+  /*
+    usage
+    struct Task: pulbic Coroutine<Task> {
     void Run() {
-        // dosomething here
+    // dosomething here
     }
-  };
-  Task t;
-*/
-const size_t kStackSize(SIGSTKSZ);
-//
+    };
+    Task t;
+  */
+  const size_t kStackSize(SIGSTKSZ);
+  //
   class Context: public List<Context>::Node {
   public:
-    Context() : _link(nullptr), _jmpbuf(), _stack_context() {}
+    Context() = default;
+    ~Context() = default;
     //
   private:
     Context *_link;
@@ -55,30 +56,28 @@ const size_t kStackSize(SIGSTKSZ);
   //
   template<typename Runner>
   class Coroutine {
-public:
-  //
-    Coroutine(): _context() {}
+  public:
+    Coroutine() = default;
+    ~Coroutine() = default;
+    //
     static bool Init(Coroutine<Runner>& coroutine) {
       return coroutine.init(coroutine);
     }
     //
     [[gnu::no_split_stack]] void SwitchIn();
     [[gnu::no_split_stack]] void SwitchOut();
-  //
- protected:
+    //
+  protected:
     [[gnu::no_split_stack]] bool init(Coroutine<Runner>& coroutine);
-  //
-  [[gnu::no_split_stack]] static void run(Runner *runner);
-  //
- private:
+    //
+    [[gnu::no_split_stack]] static void run(Runner *runner);
+    //
+  private:
     Context _context;
     //
-    template<typename>
-    friend class Maker;
+    DISALLOW_COPY_AND_ASSIGN(Coroutine);
+  };
   //
-  DISALLOW_COPY_AND_ASSIGN(Coroutine);
-};
-//
   template<typename Runner>
   void Coroutine<Runner>::run(Runner *runner) {
     runner->Run();
@@ -111,6 +110,8 @@ public:
     //
     done = _setjmp(prev->_jmpbuf);
     if (0 == done) {
+      __splitstack_block_signals(&block, nullptr);
+      __splitstack_setcontext(_context._stack_context);
       setcontext(&context);
     }
     context_list.Append(&_context);
