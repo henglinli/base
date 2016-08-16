@@ -1,23 +1,39 @@
 sudo: required
-
 dist: trusty
-
 language: cpp
+
+env:
+  global:
+    - /usr/local/bin:$PATH
 
 # NOTE: The COMPILER variable is unused. It simply makes the display on
 # travis-ci.org more readable.
 matrix:
     include:
+       - compiler: gcc
+          addons:
+            apt:
+              packages:
+                - lcov
+          env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Coverage
         - compiler: gcc
-          env: BUILD_TYPE=Coverage
+          env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Debug
         - compiler: gcc
-          env: BUILD_TYPE=Debug
+          env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Release
         - compiler: gcc
-          env: BUILD_TYPE=Release
+          addons:
+            apt:
+              sources:
+                - ubuntu-toolchain-r-test
+              packages:
+                - g++-6
+          env:
+            - COMPILER=g++-6 C_COMPILER=gcc-6  BUILD_TYPE=Debug
+            - EXTRA_FLAGS="-fno-omit-frame-pointer -g -O2 -fsanitize=undefined,address -fuse-ld=gold"
         - compiler: clang
-          env: BUILD_TYPE=Debug
+          env: COMPILER=clang++ C_COMPILER=clang BUILD_TYPE=Debug
         - compiler: clang
-          env: BUILD_TYPE=Release
+          env: COMPILER=clang++ C_COMPILER=clang BUILD_TYPE=Release
 
 before_script:
     - mkdir build && cd build
@@ -30,7 +46,7 @@ install:
     fi
 
 script:
-    - cmake .. -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+    - cmake -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${COMPILER} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DCMAKE_CXX_FLAGS="${EXTRA_FLAGS}" ..
     - make
     - make CTEST_OUTPUT_ON_FAILURE=1 test
 
@@ -38,7 +54,3 @@ after_success:
   - if [ "${BUILD_TYPE}" == "Coverage" -a "${TRAVIS_OS_NAME}" == "linux" ]; then
       coveralls --include src --include include --gcov-options '\-lp' --root .. --build-root .;
     fi
-
-os:
-  - linux
-
