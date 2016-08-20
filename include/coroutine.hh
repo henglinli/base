@@ -36,7 +36,7 @@ namespace NAMESPACE {
   //
   class Context: public List<Context>::Node {
   public:
-    Context() = default;
+    Context(): _link(nullptr), _jmpbuf(), _stack_context() {}
     ~Context() = default;
     //
   private:
@@ -57,7 +57,7 @@ namespace NAMESPACE {
   template<typename Runner>
   class Coroutine {
   public:
-    Coroutine() = default;
+    Coroutine(): _context() {}
     ~Coroutine() = default;
     //
     static bool Init(Coroutine<Runner>& coroutine) {
