@@ -4,7 +4,7 @@ function(build_and_test NAME)
   add_test(test_${NAME} ${NAME})
 endfunction(build_and_test)
 #
-set(TESTS netpoll coroutine mpsc mpmc thread worker scheduler processor)
+set(TESTS list netpoll coroutine mpsc mpmc thread worker scheduler processor)
 foreach(TEST ${TESTS})
   build_and_test(${TEST})
 endforeach()

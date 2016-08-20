@@ -1,9 +1,8 @@
 // -*-coding:utf-8-unix;-*-
-
 #pragma once
-
+//
 #include "macros.hh"
-
+//
 namespace NAMESPACE {
   //
   template<typename T>
@@ -11,79 +10,54 @@ namespace NAMESPACE {
   public:
     class Node {
     public:
-      Node() : _prev(nullptr), _next(nullptr) {}
-      //
-      Node(Node *prev, Node *next)
-        : _prev(prev) , _next(next) {}
+      Node() : _next(nullptr), _prev(&_next) {}
       //
       ~Node() {
         Unlink();
       }
       //
-      void InsertBefore(Node *other) {
-        _next = other;
-        _prev = other->_prev;
-        other->_prev->_next = this;
-        other->_prev = this;
-      }
-      //
-      void InsertAfter(Node *other) {
-        _next = other->_next;
-        _prev = other;
-        other->_next->_prev = this;
-        other->_next = this;
-      }
-      //
-      void Unlink() {
-        if (nullptr != _prev) {
-          _prev->_next = _next;
-        }
-        if (nullptr != _next) {
-          _next->_prev = _prev;
-        }
-        _next = nullptr;
-        _prev = nullptr;
-      }
-      //
-      Node *Previous() const {
-        return _prev;
-      }
-      //
-      Node *Next() const {
+      Node* Next() const {
         return _next;
       }
       //
+      void Unlink() {
+        if (nullptr != _next) {
+          _next->_prev = _prev;
+        }
+        *_prev = _next;
+      }
+      //
     private:
-      Node *_prev;
       Node *_next;
+      Node **_prev;
+      //
+      template<typename>
+      friend class List;
       //
       DISALLOW_COPY_AND_ASSIGN(Node);
     };
     //
-    List() : _root(&_root, &_root) {}
+    List() : _first(nullptr) {}
     //
-    void Append(T *other) {
-      other->InsertBefore(&_root);
+    void Push(Node* other) {
+      if (nullptr != (other->_next = _first)) {
+        _first->_prev = &(other->_next);
+      }
+      _first = other;
+      other->_prev = &_first;
     }
     //
-    T *Head() const {
-      return _root.Next();
-    }
-    //
-    T *Tail() const {
-      return _root.Previous();
-    }
-    //
-    const T *End() const {
-      return &_root;
+    Node* First() const {
+      return _first;
     }
     //
     bool Empty() const {
-      return _root.Next() == _root.Previous();
+      return nullptr == _first;
     }
     //
   private:
-    Node _root;
+    Node *_first;
+    //
     DISALLOW_COPY_AND_ASSIGN(List);
   };
 } // namespace NAMESPACE
