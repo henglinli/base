@@ -15,13 +15,14 @@ class _Worker {
 template<typename Task, typename Value>
 class Thread {
  public:
+  Thread(): _result(nullptr), _tid(), _attr() {}
+  //
   int Run(Task& task) {
-    return pthread_create(&_tid, nullptr,
-                          ThreadMain, static_cast<void*>(&task));
+    return pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
   }
   //
   int Join(Value* ptr) {
-    int done = pthread_join(_tid, reinterpret_cast<void**>(&_result));
+    auto done = pthread_join(_tid, reinterpret_cast<void**>(&_result));
     if (0 not_eq done) {
       return done;
     }
@@ -34,12 +35,13 @@ class Thread {
   }
   //
   int RunBackgroud(Task& task) {
-    int done = pthread_create(&_tid, nullptr,
-                              ThreadMain, static_cast<void*>(&task));
+    auto done = pthread_attr_init(&_attr);
     if (0 not_eq done) {
       return done;
     }
-    return pthread_detach(_tid);
+    done = pthread_create(&_tid, &_attr, ThreadMain, static_cast<void*>(&task));
+    pthread_attr_destroy(&_attr);
+    return done;
   }
   //
   static void Yield() {
@@ -54,13 +56,16 @@ class Thread {
   //
  protected:
   static void* ThreadMain(void* arg) {
-    Task* task = static_cast<Task*>(arg);
+    auto task = static_cast<Task*>(arg);
     return task->Loop();
   }
   //
  private:
   Value* _result;
   pthread_t _tid;
+  pthread_attr_t _attr;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Thread);
 }; // class Thread
 //
 } // namespace NAMESPACE

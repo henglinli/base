@@ -5,7 +5,7 @@
 //
 namespace NAMESPACE {
 //
-const uint32_t kDefaultMaxCPU(32);
+const uint32_t kDefaultMaxCPU(512);
 //
 /*
 class _Task
@@ -18,7 +18,6 @@ class _Task
 template<typename Task, uint32_t kMaxCPU = kDefaultMaxCPU>
 class Scheduler {
  public:
-  //
   typedef Scheduler<Task, kMaxCPU> Self;
   //
   Scheduler();
@@ -31,9 +30,9 @@ class Scheduler {
   //
  protected:
   //
-  void InitWorker(Self& scheduler);
+  void InitWorker(Self& scheduler, size_t threads);
   //
-  bool StartWorkerThread(size_t threads);
+  bool StartWorkerThread();
   //
   template<typename, typename>
   friend class Worker;
@@ -43,7 +42,6 @@ class Scheduler {
   uint32_t ChooseVictim(uint32_t which);
   //
  private:
-  //
   Worker<Self, Task> _worker[kMaxCPU];
   Thread<Worker<Self, Task>, Status> _thread[kMaxCPU];
   uint32_t _last_victim[kMaxCPU];
@@ -55,34 +53,25 @@ Scheduler<Task, kMaxCPU>::Scheduler()
     : _worker()
     , _thread()
     , _last_victim()
-    , _worker_threads(0) {
-  // nil
-}
+    , _worker_threads(0) {}
 //
 template<typename Task, uint32_t kMaxCPU>
 bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
   // should init worker first
-  scheduler.InitWorker(scheduler);
+  scheduler.InitWorker(scheduler, threads);
   //
-  bool done(false);
-  done = scheduler.StartWorkerThread(threads);
-  if (not done) {
-    return false;
-  }
-  //
-  return done;
+  return scheduler.StartWorkerThread();
 }
 //
 template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Stop() {
-  Status status;
-  int done(0);
-  size_t i(0);
-  for(i = 0; i < _worker_threads; ++i) {
+  for(size_t i(0); i < _worker_threads; ++i) {
     _worker[i].Stop();
   }
   //
-  for(i = 0; i < _worker_threads; ++i) {
+  Status status(kUndefined);
+  int done(0);
+  for(size_t i(0); i < _worker_threads; ++i) {
     done = _thread[i].Join(&status);
     if (0 not_eq done) {
       _thread[i].Cancel();
@@ -93,24 +82,24 @@ void Scheduler<Task, kMaxCPU>::Stop() {
 template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Add(Task* task) {
   if (nullptr not_eq task) {
-    uint32_t which = Processor<Task>::Current();
+    auto which = Processor<Task>::Current();
+    printf("%d ", which);
     _worker[which].Add(task);
   }
 }
 //
 template<typename Task, uint32_t kMaxCPU>
-void Scheduler<Task, kMaxCPU>::InitWorker(Self& scheduler) {
+void Scheduler<Task, kMaxCPU>::InitWorker(Self& scheduler, size_t threads) {
+  _worker_threads = threads < kMaxCPU ? threads: kMaxCPU;
   for(size_t i(0); i < _worker_threads; ++i) {
     _worker[i].Init(scheduler);
   }
 }
 //
 template<typename Task, uint32_t kMaxCPU>
-bool Scheduler<Task, kMaxCPU>::StartWorkerThread(size_t threads) {
-  _worker_threads = threads < kMaxCPU ? threads : kMaxCPU;
-  //
+bool Scheduler<Task, kMaxCPU>::StartWorkerThread() {
   int done(0);
-  for(size_t i(0); i < threads; ++i) {
+  for(size_t i(0); i < _worker_threads; ++i) {
     _last_victim[i] = i;
     done = _thread[i].Run(_worker[i]);
     // create worker thread failed should canncel all
@@ -121,30 +110,22 @@ bool Scheduler<Task, kMaxCPU>::StartWorkerThread(size_t threads) {
       return false;
     }
   }
+  printf("%s\n", __PRETTY_FUNCTION__);
   return true;
 }
 //
 template<typename Task, uint32_t kMaxCPU>
 Task* Scheduler<Task, kMaxCPU>::Steal() {
-  uint32_t which = Processor<Task>::Current();
-  uint32_t victim = Self::ChooseVictim(which);
-  Task* task = _worker[victim].Steal();
-  return task;
+  auto which = Processor<Task>::Current();
+  auto victim = Self::ChooseVictim(which);
+  return _worker[victim].Steal();
 }
 //
 template<typename Task, uint32_t kMaxCPU>
 uint32_t Scheduler<Task, kMaxCPU>::ChooseVictim(uint32_t which) {
-  uint32_t victim = _last_victim[which];
-  if (++victim == _worker_threads) {
-    victim = 0;
-  }
-  for (; victim < _worker_threads; ++victim) {
-    if (which == victim) {
-      continue;
-    }
-    _last_victim[which] = victim;
-    break;
-  }
+  auto victim = _last_victim[which];
+  victim = (++victim)%(_worker_threads);
+  _last_victim[which] = victim;
   return victim;
 }
 //

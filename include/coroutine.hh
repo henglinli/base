@@ -118,7 +118,7 @@ namespace NAMESPACE {
   bool Coroutine<Runner>::init(Coroutine<Runner>& coroutine) {
     ucontext_t context;
     auto done = getcontext(&context);
-    if (0 != done) {
+    if (0 not_eq done) {
       return false;
     }
     size_t size(0);

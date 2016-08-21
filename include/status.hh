@@ -4,12 +4,12 @@
 //
 namespace NAMESPACE {
 //
-enum Status {
-  kInit,
-  kReady,
-  kAbort,
-  kStop,
-  kUnkown
+  enum Status {
+    kUndefined,
+    kInit,
+    kReady,
+    kAbort,
+    kStop,
 };
 //
 } // namespace NAMESPACE

@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "macros.hh"
 #include "atomic.hh"
-
+//
 namespace NAMESPACE {
 namespace mpmc {
 // copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.c
@@ -11,19 +11,20 @@ namespace mpmc {
 template<typename Value>
 class Node {
  public:
-  Node()
-      : _next(nullptr) {
-  }
+  Node() : _next(nullptr) {}
   //
  protected:
  private:
+  Value* _next;
+  //
   template<typename>
   friend class Queue;
-  Value* volatile _next;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Node);
 };
 //
 template<typename Value>
-class Queue {
+[[gnu::aligned(64)]] class Queue {
  public:
   Queue()
     : _node()
@@ -35,19 +36,19 @@ class Queue {
   //
   void PushSingle(Value* value) {
     // If we have a single producer, don't use an atomic instruction.
-    Value* prev = _head;
+    auto prev = _head;
     _head = value;
     prev->_next = value;
   }
   //
   void Push(Value* value) {
-    Value* prev = NAMESPACE::Exchange(&_head, value);
-    prev->_next = value;
+    auto prev = atomic::Exchange(&_head, value);
+    atomic::Store(&(prev->_next), value);
   }
   //
   Value* Pop() {
     _Node cmp, xchg;
-    Value* next;
+    Value* next(nullptr);
     //
     cmp._aba = _tail._aba;
     cmp._ptr = _tail._ptr;
@@ -55,7 +56,7 @@ class Queue {
     do {
       // Get the next node rather than the tail.
       // The tail is either a stub or has already been consumed.
-      next = cmp._ptr->_next;
+      next = atomic::Load(&(cmp._ptr->_next));
       // Bailout if we have no next node.
       if (nullptr == next) {
         return nullptr;
@@ -64,26 +65,25 @@ class Queue {
       // If this fails, cmp becomes the new tail and we retry the loop.
       xchg._aba = cmp._aba + 1;
       xchg._ptr = next;
-    } while(not NAMESPACE::BoolComapreAndSwap(&(_tail._data), cmp._data, xchg._data));
+    } while(not atomic::CAS(&(_tail._data), &(cmp._data), xchg._data));
     return next;
   }
   //
  protected:
  private:
-  Align(
-      struct _Node {
-        union {
-          struct {
-            uint64_t _aba;
-            Value* _ptr;
-          };
-          uint128_t _data;
-        };
-      }, 16);
+  [[gnu::aligned(16)]] struct _Node {
+    union {
+      struct {
+        uint64_t _aba;
+        Value* _ptr;
+      };
+      uint128_t _data;
+    };
+  };
   //
   Node<Value> _node;
   Value* _head;
   _Node _tail;
 };
 } // namespace mpmc
-} // namespace base
+} // namespace NAMESPACE

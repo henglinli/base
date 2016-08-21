@@ -5,7 +5,7 @@
 using namespace NAMESPACE;
 //
 struct Task
-    : public mpmc::Node<Task> {
+  : public gnutm::StailQ<Task>::Node {
   int _value;
 };
 //
@@ -15,7 +15,7 @@ TEST(processor, api) {
   uint32_t stap = Processor<Task>::Timestap();
   EXPECT_GE(stap, 1U);
   //
-  stap = Processor<Task>::Rdscp(&cpu);
+  stap = Processor<Task>::Rdtscp(&cpu);
   EXPECT_GE(cpu, 0U);
   EXPECT_GE(stap, 1U);
 }

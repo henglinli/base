@@ -4,11 +4,6 @@
 #ifndef NAMESPACE
 #define NAMESPACE rt
 #endif
-// align
-#ifndef Align
-#define Align(Type, bytes) \
-  Type __attribute__((aligned (bytes)))
-#endif // Align
 // __init128
 // gcc -dM -E - < /dev/null
 #ifndef GCC_VERSION
@@ -36,3 +31,8 @@ template<typename T1, typename T2>
 void DoNothing(T1, T2) {
   // nil
 }
+#ifdef NDEBUG
+#define printf(...) do {} while(0)
+#else // NDEBUG
+// printf
+#endif // NDEBUG

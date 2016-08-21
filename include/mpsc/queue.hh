@@ -9,36 +9,33 @@ namespace mpsc {
 template<typename Value>
 class Node {
  public:
-  Node()
-      : _next(nullptr) {
-  }
+  Node(): _next(nullptr) {}
   //
  protected:
  private:
   template<typename>
   friend class Queue;
   Value* volatile _next;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Node);
 };
 //
 template<typename Value>
 class Queue {
  public:
-  Queue()
-    : _stub()
+  Queue(): _stub()
     , _head(static_cast<Value*>(&_stub))
-    , _tail(static_cast<Value*>(&_stub)) {
-    // nil
-  }
+    , _tail(static_cast<Value*>(&_stub)) {}
   //
   void Push(Value* value) {
     value->_next = nullptr;
-    Value* prev = NAMESPACE::Exchange(&_head, value);
+    auto prev = atomic::Exchange(&_head, value);
     prev->_next = value;
   }
   //
   Value* Pop() {
-    Value* tail = _tail;
-    Value* next = tail->_next;
+    auto tail = _tail;
+    auto next = tail->_next;
     //
     if (&_stub == tail) {
       if (nullptr == next) {
@@ -55,7 +52,7 @@ class Queue {
       return tail;
     }
     //
-    Value* head = _head;
+    auto head = _head;
     if (tail not_eq head) {
       return nullptr;
     }
@@ -75,6 +72,8 @@ class Queue {
   Node<Value> _stub;
   Value* _head;
   Value* _tail;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Queue);
 };
 } // namespace mpsc
 } // namespace NAMSPACE

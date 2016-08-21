@@ -1,13 +1,13 @@
 // -*- coding:utf-8-unix; -*-
 #include "gtest/gtest.h"
 #include "worker.hh"
+#include "gnutm/queue.hh"
 //
 using namespace NAMESPACE;
 //
 const size_t kTasks(1024);
 //
-struct Task
-    : public mpmc::Node<Task> {
+struct Task: public gnutm::StailQ<Task>::Node {
   //
   bool DoWork() {
     size_t sum(0);
@@ -37,11 +37,11 @@ TEST(Worker, api) {
   for (size_t i(0); i < kTasks; ++i) {
     worker.Add(t + i);
   }
-  int done = thread.Run(worker);
+  auto done = thread.Run(worker);
   EXPECT_EQ(0, done);
   sleep(1);
   worker.Stop();
-  Status status(kUnkown);
+  auto status(kUndefined);
   done = thread.Join(&status);
   EXPECT_EQ(0, done);
   EXPECT_EQ(kStop, status);

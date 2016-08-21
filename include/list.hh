@@ -21,7 +21,7 @@ namespace NAMESPACE {
       }
       //
       void Unlink() {
-        if (nullptr != _next) {
+        if (nullptr not_eq _next) {
           _next->_prev = _prev;
         }
         *_prev = _next;
@@ -40,7 +40,7 @@ namespace NAMESPACE {
     List() : _first(nullptr) {}
     //
     void Push(Node* other) {
-      if (nullptr != (other->_next = _first)) {
+      if (nullptr not_eq (other->_next = _first)) {
         _first->_prev = &(other->_next);
       }
       _first = other;

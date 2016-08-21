@@ -2,7 +2,7 @@
 #pragma once
 #include <x86intrin.h>
 #include <stdint.h>
-#include "mpmc/queue.hh"
+#include "gnutm/queue.hh"
 //
 // http://www.1024cores.net/home/lock-free-algorithms/tricks/per-processor-data
 //
@@ -12,43 +12,40 @@ template<typename Task>
 class Processor {
  public:
   //
-  Processor()
-    : _task_queue() {
-    //
-  }
-  //
-  static inline uint32_t Current() {
+  Processor(): _task_queue() {}
+ //
+  static uint32_t Current() {
     _timestap = __rdtscp(&_number);
     return _number;
   }
   //
-  static inline uint32_t Timestap() {
+  static uint32_t Timestap() {
     _timestap = __rdtscp(&_number);
     return _timestap;
   }
   //
-  static inline uint32_t Rdscp(uint32_t* cpu) {
+  static uint32_t Rdtscp(uint32_t* cpu) {
     return __rdtscp(cpu);
   }
   //
-  inline void Push(Task* task) {
+  void Push(Task* task) {
     _task_queue.Push(task);
   }
   //
-  inline Task* Pop() {
+  Task* Pop() {
     return _task_queue.Pop();
   }
   //
  protected:
  private:
-  mpmc::Queue<Task> _task_queue;
+  gnutm::StailQ<Task> _task_queue;
   //
-  static __thread uint32_t _number;
-  static __thread uint32_t _timestap;
+  thread_local static uint32_t _number;
+  thread_local static uint32_t _timestap;
 }; // class Processor
 //
 template<typename Task>
-__thread uint32_t Processor<Task>::_number = 0;
+thread_local uint32_t Processor<Task>::_number(0);
 template<typename Task>
-__thread uint32_t Processor<Task>::_timestap = 0;
+thread_local uint32_t Processor<Task>::_timestap(0);
 } // namespace NAMESPACE

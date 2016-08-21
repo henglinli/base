@@ -10,32 +10,31 @@ namespace NAMESPACE {
 template<typename Scheduler, typename Task>
 class Worker {
  public:
-  //
   Worker();
   //
-  inline void Init(Scheduler& scheduler) {
+  void Init(Scheduler& scheduler) {
     _status = kReady;
     _scheduler = &scheduler;
+    printf("%s\n", __PRETTY_FUNCTION__);
   }
   //
-  inline Task* Steal() {
+  Task* Steal() {
     return _processor.Pop();
   }
   //
   Status* Loop();
   //
-  inline void Add(Task* task) {
+  void Add(Task* task) {
     if (kInit == _status) {
       _processor.Push(task);
     }
   }
   //
-  inline void Stop() {
+  void Stop() {
     _status = kStop;
   }
   //
  protected:
-  //
  private:
   Status _status;
   Scheduler* _scheduler;
@@ -44,11 +43,9 @@ class Worker {
 //
 template<typename Scheduler, typename Task>
 Worker<Scheduler, Task>::Worker()
-    : _status(kUnkown)
+    : _status(kUndefined)
     , _scheduler(nullptr)
-    , _processor() {
-  //
-}
+    , _processor() {}
 //
 template<typename Scheduler, typename Task>
 Status* Worker<Scheduler, Task>::Loop() {
@@ -56,27 +53,29 @@ Status* Worker<Scheduler, Task>::Loop() {
     _status = kInit;
     return &_status;
   }
+  printf("CPU %d\n", Processor<Task>::Current());
   //
   while(true) {
     if(kAbort == _status) {
       break;
     }
     //
-    Task* task = _processor.Pop();
+    auto task = _processor.Pop();
     if (nullptr == task) {
       task = _scheduler->Steal();
       if (nullptr == task) {
         if (kStop == _status) {
           break;
         }
+        printf("stealfailed\n");
         Thread<Worker, Status>::Yield();
         continue;
       }
-      //
-      bool redo = task->DoWork();
-      if (redo) {
-        _processor.Push(task);
-      }
+    }
+    //
+    auto redo = task->DoWork();
+    if (redo) {
+      _processor.Push(task);
     }
   } // while
   return &_status;
