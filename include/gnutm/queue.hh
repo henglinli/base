@@ -10,7 +10,10 @@ namespace NAMESPACE {
     public:
       class Node {
       public:
-        Node() : _next(nullptr) {}
+        Node(): _next(nullptr){}
+        ~Node() {
+          _next = nullptr;
+        }
         //
       private:
         Value* _next;

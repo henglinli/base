@@ -9,6 +9,9 @@ const size_t kTasks(1024);
 //
 struct Task: public gnutm::StailQ<Task>::Node {
   //
+  Task(){}
+  ~Task(){}
+  //
   bool DoWork() {
     size_t sum(0);
     for (size_t i(0); sum < kTasks; ++i) {

@@ -38,6 +38,7 @@ class Worker {
  private:
   Status _status;
   Scheduler* _scheduler;
+  Task* _task;
   Processor<Task> _processor;
 };
 //
@@ -45,6 +46,7 @@ template<typename Scheduler, typename Task>
 Worker<Scheduler, Task>::Worker()
     : _status(kUndefined)
     , _scheduler(nullptr)
+    , _task(nullptr)
     , _processor() {}
 //
 template<typename Scheduler, typename Task>
@@ -60,10 +62,10 @@ Status* Worker<Scheduler, Task>::Loop() {
       break;
     }
     //
-    auto task = _processor.Pop();
-    if (nullptr == task) {
-      task = _scheduler->Steal();
-      if (nullptr == task) {
+    _task = _processor.Pop();
+    if (nullptr == _task) {
+      _task = _scheduler->Steal();
+      if (nullptr == _task) {
         if (kStop == _status) {
           break;
         }
@@ -72,9 +74,9 @@ Status* Worker<Scheduler, Task>::Loop() {
       }
     }
     //
-    auto redo = task->DoWork();
+    auto redo = _task->DoWork();
     if (redo) {
-      _processor.Push(task);
+      _processor.Push(_task);
     }
   } // while
   return &_status;
