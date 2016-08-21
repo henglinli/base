@@ -6,12 +6,6 @@
 //
 namespace NAMESPACE {
 //
-template<typename Value>
-class _Worker {
- public:
-  virtual Value* Loop() = 0;
-};
-//
 template<typename Task, typename Value>
 class Thread {
  public:
@@ -30,7 +24,7 @@ class Thread {
     return done;
   }
   //
-  inline int Cancel() {
+  int Cancel() {
     return pthread_cancel(_tid);
   }
   //
