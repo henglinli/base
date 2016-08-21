@@ -15,7 +15,7 @@ class _Worker {
 template<typename Task, typename Value>
 class Thread {
  public:
-  Thread(): _result(nullptr), _tid(), _attr() {}
+  Thread(): _result(nullptr), _tid() {}
   //
   int Run(Task& task) {
     return pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
@@ -35,13 +35,12 @@ class Thread {
   }
   //
   int RunBackgroud(Task& task) {
-    auto done = pthread_attr_init(&_attr);
+
+    auto done = pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
     if (0 not_eq done) {
       return done;
     }
-    done = pthread_create(&_tid, &_attr, ThreadMain, static_cast<void*>(&task));
-    pthread_attr_destroy(&_attr);
-    return done;
+    return pthread_detach(_tid);
   }
   //
   static void Yield() {
@@ -63,7 +62,6 @@ class Thread {
  private:
   Value* _result;
   pthread_t _tid;
-  pthread_attr_t _attr;
   //
   DISALLOW_COPY_AND_ASSIGN(Thread);
 }; // class Thread
