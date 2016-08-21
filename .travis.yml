@@ -30,10 +30,6 @@ matrix:
       env:
         - COMPILER=g++-6 C_COMPILER=gcc-6  BUILD_TYPE=Debug
         - EXTRA_FLAGS="-fno-omit-frame-pointer -fsanitize=undefined,address"
-    - compiler: clang
-      env: COMPILER=clang++ C_COMPILER=clang BUILD_TYPE=Debug
-    - compiler: clang
-      env: COMPILER=clang++ C_COMPILER=clang BUILD_TYPE=Release
 
 before_script:
     - mkdir build && cd build

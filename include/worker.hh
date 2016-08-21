@@ -67,7 +67,6 @@ Status* Worker<Scheduler, Task>::Loop() {
         if (kStop == _status) {
           break;
         }
-        printf("stealfailed\n");
         Thread<Worker, Status>::Yield();
         continue;
       }
