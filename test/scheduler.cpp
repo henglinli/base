@@ -4,22 +4,21 @@
 //
 using namespace NAMESPACE;
 //
-const size_t kTasks(512);
+const size_t kTasks(32);
 const size_t kMaxCPU(4);
 //
 struct Task: public gnutm::StailQ<Task>::Node {
+  int n;
+  int retry;
   bool DoWork() {
-    static size_t count(0);
-    printf("%d ", ++sum);
-    if (++count < kTasks) {
-      return true;
-    } else {
+    printf("%d ", n);
+    if (retry) {
+      retry = 0;
       return false;
     }
+    return false;
   }
-  static int sum;
 };
-int Task::sum(0);
 //
 TEST(Scheduler, api) {
   typedef Scheduler<Task, kMaxCPU> S;
@@ -29,10 +28,12 @@ TEST(Scheduler, api) {
   Task t[kTasks];
   auto ok(false);
   for (size_t i(0); i < kTasks; ++i) {
+    t[i].retry = 1;
+    t[i].n = i;
     ok = scheduler.Add(t + i);
     EXPECT_EQ(true, ok);
   }
-  sleep(16);
+  sleep(4);
   scheduler.Stop();
 }
 //

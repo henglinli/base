@@ -34,7 +34,7 @@ class Scheduler {
  protected:
   //
   template<Status kStatus>
-  void StopOrAbort();
+  void Signal();
   //
   void InitWorker(Self& scheduler, size_t threads);
   //
@@ -76,7 +76,7 @@ bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
 //
   template<typename Task, uint32_t kMaxCPU>
   template<Status kStatus>
-  void Scheduler<Task, kMaxCPU>::StopOrAbort() {
+  void Scheduler<Task, kMaxCPU>::Signal() {
     for(size_t i(0); i < _worker_threads; ++i) {
       if (kStop != kStatus) {
         _worker[i].Abort();
@@ -97,12 +97,12 @@ bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
   //
 template<typename Task, uint32_t kMaxCPU>
 void Scheduler<Task, kMaxCPU>::Stop() {
-  StopOrAbort<kStop>();
+  Signal<kStop>();
 }
   //
   template<typename Task, uint32_t kMaxCPU>
   void Scheduler<Task, kMaxCPU>::Abort() {
-    StopOrAbort<kAbort>();
+    Signal<kAbort>();
   }
 //
 template<typename Task, uint32_t kMaxCPU>

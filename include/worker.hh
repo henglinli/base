@@ -36,14 +36,19 @@ class Worker {
   }
   //
   void Stop() {
-    atomic::Store(&_status, kStop);
+    Signal<kStop>();
   }
   //
   void Abort() {
-    atomic::Store(&_status, kAbort);
+    Signal<kAbort>();
   }
   //
  protected:
+  template<Status kStatus>
+  void Signal() {
+    atomic::Store(&_status, kStatus);
+  }
+  //
  private:
   Status _status;
   Scheduler* _scheduler;
