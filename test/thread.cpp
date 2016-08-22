@@ -29,7 +29,7 @@ TEST(thread, task) {
   done = thread.Run(task);
   ASSERT_EQ(0, done);
   int value(0);
-  done = thread.Join(&value);
+  done = thread.Join(value);
   ASSERT_EQ(0, done);
   EXPECT_EQ(kOk, value);
 }

@@ -8,19 +8,21 @@ namespace NAMESPACE {
 //
 template<typename Task, typename Value>
 class Thread {
+  static_assert(sizeof(Value) <= sizeof(void*), "sizeof(Value) should less than sizeof(void*)");
  public:
-  Thread(): _result(nullptr), _tid() {}
+  Thread(): _tid(-1) {}
   //
   int Run(Task& task) {
     return pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
   }
   //
-  int Join(Value* ptr) {
-    auto done = pthread_join(_tid, reinterpret_cast<void**>(&_result));
+  int Join(Value& ptr) {
+    Value* result(nullptr);
+    auto done = pthread_join(_tid, reinterpret_cast<void**>(&result));
     if (0 not_eq done) {
       return done;
     }
-    *ptr = *_result;
+    ptr = *result;
     return done;
   }
   //
@@ -29,7 +31,6 @@ class Thread {
   }
   //
   int RunBackgroud(Task& task) {
-
     auto done = pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
     if (0 not_eq done) {
       return done;
@@ -54,7 +55,6 @@ class Thread {
   }
   //
  private:
-  Value* _result;
   pthread_t _tid;
   //
   DISALLOW_COPY_AND_ASSIGN(Thread);

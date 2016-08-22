@@ -37,15 +37,17 @@ TEST(Worker, api) {
   Scheduler scheduler;
   worker.Init(scheduler);
   Task t[kTasks];
+  auto ok(false);
   for (size_t i(0); i < kTasks; ++i) {
-    worker.Add(t + i);
+    ok = worker.Add(t + i);
+    EXPECT_EQ(true, ok);
   }
   auto done = thread.Run(worker);
   EXPECT_EQ(0, done);
   sleep(1);
   worker.Stop();
   auto status(kUndefined);
-  done = thread.Join(&status);
+  done = thread.Join(status);
   EXPECT_EQ(0, done);
   EXPECT_EQ(kStop, status);
 }

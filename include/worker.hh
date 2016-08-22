@@ -4,6 +4,7 @@
 #include "status.hh"
 #include "processor.hh"
 #include "thread.hh"
+#include "atomic.hh"
 //
 namespace NAMESPACE {
 //
@@ -11,27 +12,35 @@ template<typename Scheduler, typename Task>
 class Worker {
  public:
   Worker();
+  ~Worker();
   //
   void Init(Scheduler& scheduler) {
-    _status = kReady;
+    atomic::Store(&_status, kInit);
     _scheduler = &scheduler;
     printf("%s\n", __PRETTY_FUNCTION__);
   }
   //
-  Task* Steal() {
+  Task* GetTask() {
     return _processor.Pop();
   }
   //
   Status* Loop();
   //
-  void Add(Task* task) {
-    if (kInit == _status) {
+  bool Add(Task* task) {
+    auto status = atomic::Load(&_status);
+    if (kInit == status or kReady == status) {
       _processor.Push(task);
+      return true;
     }
+    return false;
   }
   //
   void Stop() {
-    _status = kStop;
+    atomic::Store(&_status, kStop);
+  }
+  //
+  void Abort() {
+    atomic::Store(&_status, kAbort);
   }
   //
  protected:
@@ -50,23 +59,33 @@ Worker<Scheduler, Task>::Worker()
     , _processor() {}
 //
 template<typename Scheduler, typename Task>
+Worker<Scheduler, Task>::~Worker() {
+  Abort();
+}
+  //
+template<typename Scheduler, typename Task>
 Status* Worker<Scheduler, Task>::Loop() {
-  if (kReady not_eq _status) {
-    _status = kInit;
+  Status status(kInit);
+  auto ok = atomic::CAS(&_status, &status, kReady);
+  if (not ok) {
     return &_status;
   }
   printf("CPU %d\n", Processor<Task>::Current());
   //
   while(true) {
-    if(kAbort == _status) {
+    status = atomic::Load(&_status);
+    if(kAbort == status) {
       break;
     }
     //
     _task = _processor.Pop();
     if (nullptr == _task) {
+      // self is empty
       _task = _scheduler->Steal();
       if (nullptr == _task) {
-        if (kStop == _status) {
+        // other is empty
+        status = atomic::Load(&_status);
+        if (kStop == status) {
           break;
         }
         Thread<Worker, Status>::Yield();
