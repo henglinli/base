@@ -39,14 +39,13 @@ namespace NAMESPACE {
       }
       // remove head
       Value* Pop() {
-        Value* first(nullptr);
+        Value* first(_first);
         __transaction_atomic {
-          if (nullptr == _first) {
-            return nullptr;
-          }
-          first = _first;
-          if (nullptr == (_first = _first->_next)) {
-            _last = &_first;
+          if (nullptr != _first) {
+            first = _first;
+            if (nullptr == (_first = _first->_next)) {
+              _last = &_first;
+            }
           }
           return first;
         }
@@ -55,6 +54,8 @@ namespace NAMESPACE {
     private:
       Value* _first;
       Value** _last;
+      //
+      DISALLOW_COPY_AND_ASSIGN(StailQ);
     };
   } // namespace gnutm
 } // namespace NAMESPACE

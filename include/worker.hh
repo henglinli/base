@@ -17,7 +17,6 @@ class Worker {
   void Init(Scheduler& scheduler) {
     atomic::Store(&_status, kInit);
     _scheduler = &scheduler;
-    printf("%s\n", __PRETTY_FUNCTION__);
   }
   //
   Task* GetTask() {
@@ -75,7 +74,6 @@ Status* Worker<Scheduler, Task>::Loop() {
   if (not ok) {
     return &_status;
   }
-  printf("CPU %d\n", Processor<Task>::Current());
   //
   while(true) {
     status = atomic::Load(&_status);
@@ -98,8 +96,8 @@ Status* Worker<Scheduler, Task>::Loop() {
       }
     }
     //
-    auto redo = _task->DoWork();
-    if (redo) {
+    ok = _task->DoWork();
+    if (not ok) {
       _processor.Push(_task);
     }
   } // while

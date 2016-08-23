@@ -8,16 +8,21 @@ const size_t kTasks(32);
 const size_t kMaxCPU(4);
 //
 struct Task: public gnutm::StailQ<Task>::Node {
+  Task(): n(0), ok(false) {}
+  //
   int n;
-  int retry;
+  bool ok;
   bool DoWork() {
-    printf("%d ", n);
-    if (retry) {
-      retry = 0;
-      return false;
+    if (not ok) {
+      printf("%d|%d ", ok, n);
+      ok = true;
+      return true;
     }
-    return false;
+    printf("%dr%d ", ok, n);
+    return true;
   }
+  //
+  DISALLOW_COPY_AND_ASSIGN(Task);
 };
 //
 TEST(Scheduler, api) {
@@ -28,7 +33,7 @@ TEST(Scheduler, api) {
   Task t[kTasks];
   auto ok(false);
   for (size_t i(0); i < kTasks; ++i) {
-    t[i].retry = 1;
+    t[i].ok = false;
     t[i].n = i;
     ok = scheduler.Add(t + i);
     EXPECT_EQ(true, ok);
