@@ -31,7 +31,8 @@ TEST(Scheduler, api) {
   bool done = S::Start(scheduler, 4);
   EXPECT_EQ(true, done);
   Task t[kTasks];
-  auto ok(false);
+  auto ok = scheduler.Add(nullptr);
+  EXPECT_EQ(false, ok);
   for (size_t i(0); i < kTasks; ++i) {
     t[i]._n = i;
     ok = scheduler.Add(t + i);

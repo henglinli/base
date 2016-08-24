@@ -72,9 +72,12 @@ Worker<Scheduler, Task>::~Worker() {
 template<typename Scheduler, typename Task>
 Status* Worker<Scheduler, Task>::Loop() {
   Status status(kInit);
-  auto ok = atomic::CAS(&_status, &status, kReady);
-  if (not ok) {
-    return &_status;
+  bool ok(false);
+  while(true) {
+    ok = atomic::CAS(&_status, &status, kReady);
+    if (ok) {
+      break;
+    }
   }
   //
   const uint32_t spin_count(30);
