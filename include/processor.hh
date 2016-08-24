@@ -2,6 +2,7 @@
 #pragma once
 #include <x86intrin.h>
 #include <stdint.h>
+#include <sched.h>
 #include "gnutm/queue.hh"
 //
 // http://www.1024cores.net/home/lock-free-algorithms/tricks/per-processor-data
@@ -32,6 +33,21 @@ class Processor {
     while(count--) {
       __pause();
     }
+  }
+  //
+  static uint32_t Count() {
+    cpu_set_t set;
+    int done = sched_getaffinity(0, sizeof(set), &set);
+    if (0 not_eq done) {
+      return 1;
+    }
+    uint32_t count(0);
+    size_t len = sizeof(set)/sizeof(uint64_t);
+    uint64_t* start(reinterpret_cast<uint64_t*>(&set));
+    while(len--) {
+      count += __popcntq(*start++);
+    }
+    return count? count: 1;
   }
   //
   void Push(Task* task) {

@@ -28,7 +28,7 @@ struct Task: public gnutm::StailQ<Task>::Node {
 TEST(Scheduler, api) {
   typedef Scheduler<Task, kMaxCPU> S;
   S scheduler;
-  bool done = S::Start(scheduler, 4);
+  bool done = S::Start(scheduler);
   EXPECT_EQ(true, done);
   Task t[kTasks];
   auto ok = scheduler.Add(nullptr);

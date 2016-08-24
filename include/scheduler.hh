@@ -25,6 +25,11 @@ class Scheduler {
   //
   static bool Start(Self& scheduler, size_t threads);
   //
+  static bool Start(Self& scheduler) {
+    auto threads = Processor<Task>::Count();
+    return Start(scheduler, threads);
+  }
+  //
   void Stop();
   //
   void Abort();

@@ -18,4 +18,7 @@ TEST(processor, api) {
   stap = Processor<Task>::Rdtscp(&cpu);
   EXPECT_GE(cpu, 0U);
   EXPECT_GE(stap, 1U);
+  uint32_t count = Processor<Task>::Count();
+  printf("cpus %u\n", count);
+  EXPECT_GE(count, 1);
 }
