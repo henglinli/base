@@ -28,6 +28,12 @@ class Processor {
     return __rdtscp(cpu);
   }
   //
+  static void Relax(uint32_t count) {
+    while(count--) {
+      __pause();
+    }
+  }
+  //
   void Push(Task* task) {
     _task_queue.Push(task);
   }

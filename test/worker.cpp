@@ -8,8 +8,8 @@ using namespace NAMESPACE;
 const size_t kTasks(1024);
 //
 struct Task: public gnutm::StailQ<Task>::Node {
-  //
-  Task(){}
+  bool _ok;
+  Task(): _ok(false) {}
   ~Task(){}
   //
   bool DoWork() {
@@ -17,9 +17,12 @@ struct Task: public gnutm::StailQ<Task>::Node {
     for (size_t i(0); sum < kTasks; ++i) {
       ++sum;
     }
-    if (1 < sum) {
+    if (not _ok) {
+      printf("%d| ", _ok);
+      _ok = true;
       return false;
     }
+    printf("%dr ", _ok);
     return true;
   }
 };
@@ -44,7 +47,7 @@ TEST(Worker, api) {
   }
   auto done = thread.Run(worker);
   EXPECT_EQ(0, done);
-  sleep(1);
+  sleep(2);
   worker.Stop();
   auto status(kUndefined);
   done = thread.Join(status);

@@ -53,6 +53,8 @@ class Worker {
   Scheduler* _scheduler;
   Task* _task;
   Processor<Task> _processor;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Worker);
 };
 //
 template<typename Scheduler, typename Task>
@@ -66,7 +68,7 @@ template<typename Scheduler, typename Task>
 Worker<Scheduler, Task>::~Worker() {
   Abort();
 }
-  //
+//
 template<typename Scheduler, typename Task>
 Status* Worker<Scheduler, Task>::Loop() {
   Status status(kInit);
@@ -75,6 +77,8 @@ Status* Worker<Scheduler, Task>::Loop() {
     return &_status;
   }
   //
+  const uint32_t spin_count(30);
+  bool spin(false);
   while(true) {
     status = atomic::Load(&_status);
     if(kAbort == status) {
@@ -91,7 +95,13 @@ Status* Worker<Scheduler, Task>::Loop() {
         if (kStop == status) {
           break;
         }
-        Thread<Worker, Status>::Yield();
+        // try spin an then yield;
+        if (spin) {
+          Processor<Task>::Relax(spin_count);
+        } else {
+          spin = true;
+          Thread<Worker, Status>::Yield();
+        }
         continue;
       }
     }

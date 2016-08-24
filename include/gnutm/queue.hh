@@ -32,6 +32,7 @@ namespace NAMESPACE {
       }
       // insert tail
       void Push(Value* node) {
+        node->_next = nullptr;
         __transaction_atomic {
           *_last = node;
           _last = &(node->_next);
