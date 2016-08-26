@@ -1,6 +1,7 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
 #include <pthread.h>
+#include <sched.h>
 #include <stdint.h>
 #include "macros.hh"
 //
@@ -14,6 +15,16 @@ class Thread {
   //
   int Run(Task& task) {
     return pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&task));
+  }
+  //
+  int Run(Task& task, int cpu) {
+    pthread_attr_t attr;
+    pthread_attr_init(&attr);
+    cpu_set_t set;
+    CPU_ZERO(&set);
+    CPU_SET(cpu, &set);
+    pthread_attr_setaffinity_np(&attr, sizeof(set), &set);
+    return pthread_create(&_tid, &attr, ThreadMain, static_cast<void*>(&task));
   }
   //
   int Join(Value& ptr) {

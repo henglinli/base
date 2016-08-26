@@ -23,25 +23,22 @@ class Scheduler {
   Scheduler();
   ~Scheduler();
   //
-  static bool Start(Self& scheduler, size_t threads);
-  //
-  static bool Start(Self& scheduler) {
-    auto threads = Processor<Task>::Count();
-    return Start(scheduler, threads);
-  }
+  static bool Start(Self& scheduler);
   //
   void Stop();
   //
   void Abort();
   //
-  bool Add(Task* task);
+  bool ToSelf(Task* task);
+  //
+  bool ToOther(Task* task);
   //
  protected:
   //
   template<Status kStatus>
   void Signal();
   //
-  void InitWorker(Self& scheduler, size_t threads);
+  void InitWorker(Self& scheduler);
   //
   bool StartWorkerThread();
   //
@@ -72,9 +69,9 @@ Scheduler<Task, kMaxCPU>::~Scheduler() {
 }
 //
 template<typename Task, uint32_t kMaxCPU>
-bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
+bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler) {
   // should init worker first
-  scheduler.InitWorker(scheduler, threads);
+  scheduler.InitWorker(scheduler);
   //
   return scheduler.StartWorkerThread();
 }
@@ -82,6 +79,7 @@ bool Scheduler<Task, kMaxCPU>::Start(Self& scheduler, size_t threads) {
   template<typename Task, uint32_t kMaxCPU>
   template<Status kStatus>
   void Scheduler<Task, kMaxCPU>::Signal() {
+    static_assert(kStatus == kStop or kStatus == kAbort, "should kStop or kAbort");
     for(size_t i(0); i < _worker_threads; ++i) {
       if (kStop != kStatus) {
         _worker[i].Abort();
@@ -111,18 +109,29 @@ void Scheduler<Task, kMaxCPU>::Stop() {
   }
 //
 template<typename Task, uint32_t kMaxCPU>
-bool Scheduler<Task, kMaxCPU>::Add(Task* task) {
+bool Scheduler<Task, kMaxCPU>::ToSelf(Task* task) {
   if (nullptr not_eq task) {
     auto which = Processor<Task>::Current();
     return _worker[which].Add(task);
   }
   return false;
 }
+  //
+  template<typename Task, uint32_t kMaxCPU>
+  bool Scheduler<Task, kMaxCPU>::ToOther(Task* task) {
+    if (nullptr not_eq task) {
+      auto which = Processor<Task>::Current();
+      return _worker[which].Add(task);
+    }
+    return false;
+  }
 //
 template<typename Task, uint32_t kMaxCPU>
-void Scheduler<Task, kMaxCPU>::InitWorker(Self& scheduler, size_t threads) {
-  _worker_threads = threads < kMaxCPU ? threads: kMaxCPU;
+void Scheduler<Task, kMaxCPU>::InitWorker(Self& scheduler) {
+  auto cpus = Processor<Task>::Count();
+  _worker_threads = cpus < kMaxCPU ? cpus: kMaxCPU;
   for(size_t i(0); i < _worker_threads; ++i) {
+    _last_victim[i] = (0x49f6428aUL + Processor<Task>::Timestap()) % _worker_threads;
     _worker[i].Init(scheduler);
   }
 }
@@ -132,7 +141,7 @@ bool Scheduler<Task, kMaxCPU>::StartWorkerThread() {
   int done(0);
   for(size_t i(0); i < _worker_threads; ++i) {
     _last_victim[i] = i;
-    done = _thread[i].Run(_worker[i]);
+    done = _thread[i].Run(_worker[i], i);
     // create worker thread failed should canncel all
     if (0 not_eq done) {
       for(size_t j(0); j < i; ++j) {

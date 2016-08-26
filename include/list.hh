@@ -12,7 +12,7 @@ namespace NAMESPACE {
     public:
       Node() : _next(nullptr), _prev(&_next) {}
       //
-      ~Node() {
+      virtual ~Node() {
         Unlink();
       }
       //

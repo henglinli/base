@@ -11,9 +11,7 @@ namespace NAMESPACE {
       class Node {
       public:
         Node(): _next(nullptr){}
-        ~Node() {
-          _next = nullptr;
-        }
+        virtual ~Node() = default;
         //
       private:
         Value* _next;

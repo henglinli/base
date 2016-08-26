@@ -10,7 +10,6 @@ const size_t kTasks(1024);
 struct Task: public gnutm::StailQ<Task>::Node {
   bool _ok;
   Task(): _ok(false) {}
-  ~Task(){}
   //
   bool DoWork() {
     size_t sum(0);
@@ -25,6 +24,8 @@ struct Task: public gnutm::StailQ<Task>::Node {
     printf("%dr ", _ok);
     return true;
   }
+  //
+  DISALLOW_COPY_AND_ASSIGN(Task);
 };
 //
 struct Scheduler {

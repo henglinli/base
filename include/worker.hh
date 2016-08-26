@@ -45,6 +45,7 @@ class Worker {
  protected:
   template<Status kStatus>
   void Signal() {
+    static_assert(kStatus == kStop or kStatus == kAbort, "should kStop or kAbort");
     atomic::Store(&_status, kStatus);
   }
   //

@@ -15,17 +15,16 @@ class Processor {
   //
   Processor(): _task_queue() {}
  //
-  static uint32_t Current() {
+  inline static uint32_t Current() {
     _timestap = __rdtscp(&_number);
     return _number;
   }
   //
-  static uint32_t Timestap() {
-    _timestap = __rdtscp(&_number);
-    return _timestap;
+  inline static uint64_t Timestap() {
+    return __rdtsc();
   }
   //
-  static uint32_t Rdtscp(uint32_t* cpu) {
+  inline static uint64_t Rdtscp(uint32_t* cpu) {
     return __rdtscp(cpu);
   }
   //
