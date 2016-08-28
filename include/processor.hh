@@ -14,7 +14,7 @@ class Processor {
  public:
   //
   Processor(): _task_queue() {}
- //
+  //
   inline static uint32_t Current() {
     _timestap = __rdtscp(&_number);
     return _number;
@@ -32,6 +32,10 @@ class Processor {
     while(count--) {
       __pause();
     }
+  }
+  //
+  static constexpr size_t MaxCPUs() {
+    return sizeof(cpu_set_t)*8;
   }
   //
   static uint32_t Count() {
@@ -63,6 +67,8 @@ class Processor {
   //
   thread_local static uint32_t _number;
   thread_local static uint32_t _timestap;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Processor);
 }; // class Processor
 //
 template<typename Task>
