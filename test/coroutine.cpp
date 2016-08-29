@@ -4,7 +4,11 @@
 //
 using namespace NAMESPACE;
 //
-struct Task: public Coroutine<Task> {
+struct Error {
+  void Run(){}
+};
+//
+struct Task: public Coroutine {
   void Run(){
     std::cout << __PRETTY_FUNCTION__ << (++_n) << std::endl;
   }
@@ -12,13 +16,13 @@ struct Task: public Coroutine<Task> {
 };
 int Task::_n(0);
 //
-struct Work: public Coroutine<Work> {
+struct Work: public Coroutine {
   void Run() {
     std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //
-struct Go: public Coroutine<Go> {
+struct Go: public Coroutine {
   void Run() {
     std::cout << __PRETTY_FUNCTION__ << std::endl;
     Work w;
@@ -32,13 +36,13 @@ TEST(coroutine, api) {
   Work w;
   Task t;
   //
-  auto ok = Work::Init(w);
+  auto ok = Coroutine::Init(w);
   EXPECT_EQ(true, ok);
-  ok = Task::Init(t);
+  ok = Coroutine::Init(t);
   EXPECT_EQ(true, ok);
   //
-  t.SwitchIn();
-  w.SwitchIn();
+  Coroutine::SwitchIn(t);
+  Coroutine::SwitchIn(w);
   t.SwitchIn();
   w.SwitchIn();
   //
@@ -47,5 +51,9 @@ TEST(coroutine, api) {
   EXPECT_EQ(true, ok);
   g.SwitchIn();
   g.SwitchIn();
+  //
+  Error error;
+  //Coroutine::Init(error);
+  //
 }
 //

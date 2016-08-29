@@ -24,17 +24,17 @@ extern "C" {
 }
 //
 namespace NAMESPACE {
-  /*
-    usage
-    struct Task: pulbic Coroutine<Task> {
+  /* usage
+  struct Task_: pulbic Coroutine {
     void Run() {
-    // dosomething here
+      // dosomething here
     }
-    };
-    Task t;
-    Task::Init(t);
-    t.SwitchIn();
+  };
+  Task_ t;
+  Coroutine::Init(t);
+  Coroutine::SwitchIn(t);
   */
+  //
   const size_t kStackSize(SIGSTKSZ);
   //
   class Context final: public List<Context>::Node {
@@ -48,7 +48,6 @@ namespace NAMESPACE {
     void *_stack;
     void *_stack_context[10];
     //
-    template<typename>
     friend class Coroutine;
     //
   public:
@@ -74,24 +73,32 @@ namespace NAMESPACE {
     static Init init;
   }
   //
-  template<typename Runner>
   class Coroutine {
   public:
-    typedef Coroutine<Runner> Self;
     Coroutine(): _context() {}
     ~Coroutine() = default;
     //
-    static bool Init(Self& coroutine) {
-      return coroutine.init(coroutine);
+    template<typename Runner>
+    static bool Init(Runner& runner) {
+      static_assert(__is_base_of(Coroutine, Runner), "Runner must inherit from Coroutine");
+      return runner.init(runner);
+    }
+    //
+    template<typename Runner>
+    static void SwitchIn(Runner& runner) {
+      runner.SwitchIn();
     }
     //
     [[gnu::no_split_stack]] void SwitchIn();
+    //
     [[gnu::no_split_stack]] void SwitchOut();
     //
   protected:
-    [[gnu::no_split_stack]] bool init(Self& coroutine);
+    template<typename Runner>
+    [[gnu::no_split_stack]] bool init(Runner& runner);
     //
-    [[gnu::no_split_stack]] static void run(Runner* runner, jmp_buf* env);
+    template<typename Runner>
+    [[gnu::no_split_stack]] static void Run(Runner* runner, jmp_buf* env);
     //
     [[gnu::no_split_stack]] static void Switch(Context* from, Context* to);
     //
@@ -102,7 +109,7 @@ namespace NAMESPACE {
   };
   //
   template<typename Runner>
-  void Coroutine<Runner>::run(Runner *runner, jmp_buf* env) {
+  void Coroutine::Run(Runner* runner, jmp_buf* env) {
     auto self = &(runner->_context);
     auto done = _setjmp(self->_env);
     if (0 == done) {
@@ -115,7 +122,7 @@ namespace NAMESPACE {
   }
   //
   template<typename Runner>
-  bool Coroutine<Runner>::init(Coroutine<Runner>& coroutine) {
+  bool Coroutine::init(Runner& runner) {
     ucontext_t context;
     auto done = getcontext(&context);
     if (0 not_eq done) {
@@ -132,8 +139,8 @@ namespace NAMESPACE {
     __splitstack_block_signals_context(_context._stack_context, &block, nullptr);
     //
     jmp_buf env;
-    auto func(reinterpret_cast<void(*)()>(Coroutine<Runner>::run));
-    makecontext(&context, func, 2, &coroutine, &env);
+    auto func(reinterpret_cast<void(*)()>(Coroutine::Run<Runner>));
+    makecontext(&context, func, 2, &runner, &env);
     //
     done = _setjmp(env);
     if (0 == done) {
@@ -147,22 +154,19 @@ namespace NAMESPACE {
     return true;
   }
   //
-  template<typename Runner>
-  void Coroutine<Runner>::SwitchIn() {
+  void Coroutine::SwitchIn() {
     auto from = Context::current;
     _context._link = Context::current;
     Context::current = &_context;
     Switch(from, &_context);
   }
   //
-  template<typename Runner>
-  void Coroutine<Runner>::SwitchOut() {
+  void Coroutine::SwitchOut() {
     Context::current = _context._link;
     Switch(&_context, Context::current);
   }
   //
-  template<typename Runner>
-  void Coroutine<Runner>::Switch(Context* from, Context* to) {
+  void Coroutine::Switch(Context* from, Context* to) {
     auto done = _setjmp(from->_env);
     if (0 == done) {
       _longjmp(to->_env, 1);
