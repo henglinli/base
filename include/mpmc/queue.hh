@@ -24,7 +24,7 @@ class Node {
 };
 //
 template<typename Value>
-[[gnu::aligned(64)]] class Queue {
+class [[gnu::aligned(64)]] Queue {
  public:
   Queue()
     : _node()
@@ -71,7 +71,7 @@ template<typename Value>
   //
  protected:
  private:
-  [[gnu::aligned(16)]] struct _Node {
+  struct [[gnu::aligned(16)]] _Node {
     union {
       struct {
         uint64_t _aba;

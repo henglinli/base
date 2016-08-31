@@ -9,7 +9,7 @@
 namespace NAMESPACE {
 //
 template<typename Scheduler, typename Task>
-class Worker {
+class Worker: public Thread::Routine<Worker<Scheduler, Task> > {
  public:
   Worker();
   ~Worker();
@@ -104,7 +104,7 @@ Status* Worker<Scheduler, Task>::Loop() {
           Processor<Task>::Relax(spin_count);
         } else {
           spin = true;
-          Thread<Worker, Status>::Yield();
+          Thread::Yield();
         }
         continue;
       }

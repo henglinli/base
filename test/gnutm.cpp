@@ -9,7 +9,7 @@ struct Google: public gnutm::StailQ<Google>::Node {};
 //
 gnutm::StailQ<Google> q;
 //
-struct Producer {
+struct Producer: public Thread::Routine<Producer> {
   int _sum;
   int _result;
   Google* _g;
@@ -33,7 +33,7 @@ struct Producer {
   DISALLOW_COPY_AND_ASSIGN(Producer);
 };
 //
-struct Consumer {
+struct Consumer: public Thread::Routine<Consumer> {
   int _sum;
   int _result;
   Google* _g;
@@ -54,8 +54,8 @@ struct Consumer {
 };
 //
 TEST(gnutm, stailq) {
-  Thread<Consumer, int> mc1, mc2;
-  Thread<Producer, int> mp1, mp2;
+  Thread mc1, mc2;
+  Thread mp1, mp2;
   Consumer c1(1000*10), c2(1000*11);
   Producer p1(1000*12), p2(1000*13);
   //

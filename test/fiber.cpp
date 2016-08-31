@@ -18,14 +18,19 @@ struct Task: public Fiber::Routine<Task> {
 };
 int Task::_n(0);
 //
-struct Work: public Fiber::Routine<Task> {
+struct Work: public Fiber::Routine<Work> {
   void Run() {
     std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //
-struct Go: public Fiber::Routine<Task> {
+struct Go: public Fiber::Routine<Go> {
   void Run() {
+    Fiber f;
+    Task t;
+    auto ok = f.MakeStack();
+    EXPECT_TRUE(ok);
+    f.RunTask(t);
     std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
@@ -33,14 +38,16 @@ struct Go: public Fiber::Routine<Task> {
 TEST(coroutine, api) {
   Task t;
   Work w;
+  Go g;
   //
   Fiber f;
-  auto ok = f.Init(t, 64*1024);
+  auto ok = f.MakeStack(64*1024);
   EXPECT_EQ(true, ok);
-  f.SwitchIn();
+  f.RunTask(t);
+  f.RunTask(w);
+  f.RunTask(g);
   //
   Error error;
-  //Coroutine::Init(error);
-  //
+  //f.RunTask(error);
 }
 //

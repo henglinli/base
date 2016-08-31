@@ -36,7 +36,7 @@ struct Scheduler {
 };
 //
 TEST(Worker, api) {
-  Thread<Worker<Scheduler, Task>, Status> thread;
+  Thread thread;
   Worker<Scheduler, Task> worker;
   Scheduler scheduler;
   worker.Init(scheduler);

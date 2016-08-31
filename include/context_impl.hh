@@ -1,5 +1,8 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
+//
+#include <stddef.h>
+#include <stdint.h>
 // copy of https://github.com/halayli/lthread/blob/master/src/lthread.c
 __asm__ (
          ".text\n"

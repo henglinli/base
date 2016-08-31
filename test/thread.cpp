@@ -5,15 +5,14 @@
 using namespace NAMESPACE;
 //
 template<typename Value>
-class Task {
+class Task: public Thread::Routine<Task<Value> > {
  public:
   explicit Task(Value value)
       : _value(value) {
   }
   //
-  Value* Loop() {
-    Thread<Task, Value>::Yield();
-    sleep(1);
+  void* Loop() {
+    Thread::Yield();
     return &_value;
   }
   //
@@ -22,8 +21,9 @@ class Task {
 };
 //
 const int kOk(8);
+//
 TEST(thread, task) {
-  Thread<Task<int>, int> thread;
+  Thread thread;
   Task<int> task(kOk);
   int done(-1);
   done = thread.Run(task);
@@ -35,15 +35,12 @@ TEST(thread, task) {
 }
 //
 TEST(thread, backgroud_task) {
-  Thread<Task<int>, int> thread;
+  Thread thread;
   Task<int> task(1);
   int done(-1);
   done = thread.RunBackgroud(task);
   ASSERT_EQ(0, done);
-  sleep(2);
-  done = thread.RunBackgroud(task);
-  EXPECT_EQ(0, done);
-  done = thread.Cancel();
+  sleep(1);
   EXPECT_EQ(0, done);
 }
 //

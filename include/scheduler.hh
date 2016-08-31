@@ -49,7 +49,7 @@ class Scheduler {
   //
  private:
   Worker<Self, Task> _worker[kMaxCPUs];
-  Thread<Worker<Self, Task>, Status> _thread[kMaxCPUs];
+  Thread _thread[kMaxCPUs];
   uint32_t _last_victim[kMaxCPUs];
   uint32_t _worker_threads;
 }; // class Scheduler

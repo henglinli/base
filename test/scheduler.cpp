@@ -33,7 +33,7 @@ TEST(Scheduler, api) {
   EXPECT_EQ(true, done);
   Task t[kTasks];
   auto ok = scheduler.ToSelf(nullptr);
-  EXPECT_EQ(false, ok);
+  EXPECT_FALSE(ok);
   for (size_t i(0); i < kTasks; ++i) {
     t[i]._n = i;
     if(i%4) {
