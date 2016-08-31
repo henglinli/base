@@ -13,13 +13,28 @@ matrix:
     - compiler: gcc
       addons:
         apt:
+          sources:
+            - ubuntu-toolchain-r-test
           packages:
             - lcov
-      env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Coverage
+            - g++-6
+      env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Coverage
     - compiler: gcc
-      env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Debug
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Debug
     - compiler: gcc
-      env: COMPILER=g++ C_COMPILER=gcc       BUILD_TYPE=Release
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-6
+      env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Release
     - compiler: gcc
       addons:
         apt:
