@@ -36,22 +36,20 @@ struct Scheduler {
 };
 //
 TEST(Worker, api) {
-  Thread thread;
   Worker<Scheduler, Task> worker;
   Scheduler scheduler;
-  worker.Init(scheduler);
   Task t[kTasks];
   auto ok(false);
   for (size_t i(0); i < kTasks; ++i) {
     ok = worker.Add(t + i);
     EXPECT_EQ(true, ok);
   }
-  auto done = thread.Run(worker);
+  auto done = Worker<Scheduler, Task>::Start(worker, scheduler);
   EXPECT_EQ(0, done);
-  sleep(2);
+  sleep(1);
   worker.Stop();
   auto status(kUndefined);
-  done = thread.Join(status);
+  done = worker.Join(status);
   EXPECT_EQ(0, done);
   EXPECT_EQ(kStop, status);
 }

@@ -9,7 +9,7 @@ struct Google: public gnutm::StailQ<Google>::Node {};
 //
 gnutm::StailQ<Google> q;
 //
-struct Producer: public Thread::Routine<Producer> {
+struct Producer: public Thread<Producer> {
   int _sum;
   int _result;
   Google* _g;
@@ -33,7 +33,7 @@ struct Producer: public Thread::Routine<Producer> {
   DISALLOW_COPY_AND_ASSIGN(Producer);
 };
 //
-struct Consumer: public Thread::Routine<Consumer> {
+struct Consumer: public Thread<Consumer> {
   int _sum;
   int _result;
   Google* _g;
@@ -54,33 +54,31 @@ struct Consumer: public Thread::Routine<Consumer> {
 };
 //
 TEST(gnutm, stailq) {
-  Thread mc1, mc2;
-  Thread mp1, mp2;
   Consumer c1(1000*10), c2(1000*11);
   Producer p1(1000*12), p2(1000*13);
   //
   int done(-1);
-  done = mc1.Run(c1);
+  done = Consumer::Run(c1);
   EXPECT_EQ(0, done);
-  done = mc2.Run(c2);
+  done = Consumer::Run(c2);
   EXPECT_EQ(0, done);
   //
-  done = mp1.Run(p1);
+  done = Producer::Run(p1);
   EXPECT_EQ(0, done);
-  done = mp2.Run(p2);
+  done = Producer::Run(p2);
   //
   int result(0);
-  done = mp1.Join(result);
+  done = p1.Join(result);
   EXPECT_EQ(0, done);
   printf("mp1 %d\n", result);
-  done = mp2.Join(result);
+  done = p2.Join(result);
   EXPECT_EQ(0, done);
   printf("mp2 %d\n", result);
   //
-  done = mc1.Join(result);
+  done = c1.Join(result);
   EXPECT_EQ(0, done);
   printf("mc1 %d\n", result);
-  done = mc2.Join(result);
+  done = c2.Join(result);
   EXPECT_EQ(0, done);
   printf("mc2 %d\n", result);
   //

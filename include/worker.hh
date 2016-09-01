@@ -9,14 +9,18 @@
 namespace NAMESPACE {
 //
 template<typename Scheduler, typename Task>
-class Worker: public Thread::Routine<Worker<Scheduler, Task> > {
+class Worker: public Thread<Worker<Scheduler, Task> > {
  public:
+  //
+  typedef Worker<Scheduler, Task> Self;
+  //
   Worker();
+  //
   ~Worker();
   //
-  void Init(Scheduler& scheduler) {
-    atomic::Store(&_status, kInit);
-    _scheduler = &scheduler;
+  static int Start(Self& worker, Scheduler& scheduler) {
+    worker._scheduler = &scheduler;
+    return Self::Run(worker);
   }
   //
   Task* GetTask() {
@@ -60,7 +64,7 @@ class Worker: public Thread::Routine<Worker<Scheduler, Task> > {
 //
 template<typename Scheduler, typename Task>
 Worker<Scheduler, Task>::Worker()
-    : _status(kUndefined)
+    : _status(kInit)
     , _scheduler(nullptr)
     , _task(nullptr)
     , _processor() {}
@@ -104,7 +108,7 @@ Status* Worker<Scheduler, Task>::Loop() {
           Processor<Task>::Relax(spin_count);
         } else {
           spin = true;
-          Thread::Yield();
+          Worker<Scheduler, Task>::Yield();
         }
         continue;
       }

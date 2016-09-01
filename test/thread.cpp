@@ -5,14 +5,14 @@
 using namespace NAMESPACE;
 //
 template<typename Value>
-class Task: public Thread::Routine<Task<Value> > {
+class Task: public Thread<Task<Value> > {
  public:
   explicit Task(Value value)
       : _value(value) {
   }
   //
   void* Loop() {
-    Thread::Yield();
+    Task<Value>::Yield();
     return &_value;
   }
   //
@@ -22,25 +22,52 @@ class Task: public Thread::Routine<Task<Value> > {
 //
 const int kOk(8);
 //
-TEST(thread, task) {
-  Thread thread;
+TEST(Thread, Run) {
   Task<int> task(kOk);
-  int done(-1);
-  done = thread.Run(task);
-  ASSERT_EQ(0, done);
+  // Run
+  auto done = Task<int>::Run(task);
+  EXPECT_EQ(0, done);
   int value(0);
-  done = thread.Join(value);
+  // Join
+  done = task.Join(value);
   ASSERT_EQ(0, done);
   EXPECT_EQ(kOk, value);
 }
 //
-TEST(thread, backgroud_task) {
-  Thread thread;
-  Task<int> task(1);
-  int done(-1);
-  done = thread.RunBackgroud(task);
-  ASSERT_EQ(0, done);
-  sleep(1);
+TEST(Thread, Run_cpu) {
+  Task<int> task(kOk);
+  // Run
+  auto done = Task<int>::Run(task, 0);
   EXPECT_EQ(0, done);
+  int value(0);
+  // Join
+  done = task.Join(value);
+  ASSERT_EQ(0, done);
+  EXPECT_EQ(kOk, value);
+  // Run cpu
+  done = Task<int>::Run(task, 0);
+  EXPECT_EQ(-1, done);
+}
+//
+TEST(Thread, RunBackgroud) {
+  Task<int> task(kOk);
+  // Run
+  auto done = Task<int>::RunBackgroud(task);
+  EXPECT_EQ(0, done);
+  int value(0);
+  // Join
+  done = task.Join(value);
+  EXPECT_EQ(-1, done);
+}
+//
+TEST(Thread, RunBackgroud_cpu) {
+  Task<int> task(kOk);
+  // Run
+  auto done = Task<int>::RunBackgroud(task, 0);
+  EXPECT_EQ(0, done);
+  int value(0);
+  // Join
+  done = task.Join(value);
+  EXPECT_EQ(-1, done);
 }
 //
