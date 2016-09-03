@@ -21,7 +21,7 @@ struct Producer: public Thread<Producer> {
     }
   }
   //
-  int* Loop() {
+  auto Loop() -> int* {
     _g = new Google[_sum];
     printf("Producer%p\n", &_result);
     for (_result = 0; _result < _sum; ++_result) {
@@ -39,7 +39,7 @@ struct Consumer: public Thread<Consumer> {
   Google* _g;
   explicit Consumer(size_t sum): _sum(sum), _result(-1), _g(nullptr) {}
   //
-  int* Loop() {
+  auto Loop() -> int* {
     printf("Producer%p\n", &_result);
     for (_result = 0; _result < _sum;) {
       _g = q.Pop();

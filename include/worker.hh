@@ -18,18 +18,18 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   //
   ~Worker();
   //
-  static int Start(Self& worker, Scheduler& scheduler) {
+  static auto Start(Self& worker, Scheduler& scheduler) -> int {
     worker._scheduler = &scheduler;
     return Self::Run(worker);
   }
   //
-  Task* GetTask() {
+  inline auto GetTask() -> Task* {
     return _processor.Pop();
   }
   //
-  Status* Loop();
+  auto Loop() -> Status*;
   //
-  bool Add(Task* task) {
+  auto Add(Task* task) -> bool {
     auto status = atomic::Load(&_status);
     if (kInit == status or kReady == status) {
       _processor.Push(task);
@@ -38,17 +38,17 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
     return false;
   }
   //
-  void Stop() {
+  inline auto Stop() -> void {
     Signal<kStop>();
   }
   //
-  void Abort() {
+  inline auto Abort() -> void {
     Signal<kAbort>();
   }
   //
  protected:
   template<Status kStatus>
-  void Signal() {
+  auto Signal() -> void {
     static_assert(kStatus == kStop or kStatus == kAbort, "should kStop or kAbort");
     atomic::Store(&_status, kStatus);
   }
@@ -75,7 +75,7 @@ Worker<Scheduler, Task>::~Worker() {
 }
 //
 template<typename Scheduler, typename Task>
-Status* Worker<Scheduler, Task>::Loop() {
+auto Worker<Scheduler, Task>::Loop() -> Status* {
   Status status(kInit);
   bool ok(false);
   while(true) {

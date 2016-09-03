@@ -11,7 +11,7 @@ class Task: public Thread<Task<Value> > {
       : _value(value) {
   }
   //
-  void* Loop() {
+  auto Loop() -> void* {
     Task<Value>::Yield();
     return &_value;
   }
@@ -56,6 +56,7 @@ TEST(Thread, RunBackgroud) {
   EXPECT_EQ(0, done);
   int value(0);
   // Join
+  sleep(1);
   done = task.Join(value);
   EXPECT_EQ(-1, done);
 }
@@ -67,6 +68,7 @@ TEST(Thread, RunBackgroud_cpu) {
   EXPECT_EQ(0, done);
   int value(0);
   // Join
+  sleep(1);
   done = task.Join(value);
   EXPECT_EQ(-1, done);
 }

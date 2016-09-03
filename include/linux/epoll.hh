@@ -24,7 +24,7 @@ public:
   }
   //
 protected:
-  int init() {
+  auto init() -> int {
     if (0 < _fd) {
       return _fd;
     }
@@ -35,7 +35,7 @@ protected:
     return -errno;
   }
   //
-  int open(int fd, void *ptr) {
+  auto open(int fd, void *ptr) -> int {
     if (-1 == _fd) {
       return -1;
     }
@@ -49,7 +49,7 @@ protected:
     return -errno;
   }
   //
-  int close(int fd) {
+  auto close(int fd) -> int {
     if (-1 == _fd) {
       return -1;
     }
@@ -61,7 +61,7 @@ protected:
     return -errno;
   }
   //
-  int poll(bool block) {
+  auto poll(bool block) -> int {
     if (-1 == _fd) {
       return -1;
     }

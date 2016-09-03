@@ -79,28 +79,28 @@ namespace NAMESPACE {
     ~Coroutine() = default;
     //
     template<typename Runner>
-    static bool Init(Runner& runner) {
+    static auto Init(Runner& runner) -> bool {
       static_assert(__is_base_of(Coroutine, Runner), "Runner must inherit from Coroutine");
       return runner.init(runner);
     }
     //
     template<typename Runner>
-    static void SwitchIn(Runner& runner) {
+    static auto SwitchIn(Runner& runner) -> void {
       runner.SwitchIn();
     }
     //
-    [[gnu::no_split_stack]] void SwitchIn();
+    [[gnu::no_split_stack]] auto SwitchIn() -> void;
     //
-    [[gnu::no_split_stack]] void SwitchOut();
+    [[gnu::no_split_stack]] auto SwitchOut() -> void;
     //
   protected:
     template<typename Runner>
     [[gnu::no_split_stack]] bool init(Runner& runner);
     //
     template<typename Runner>
-    [[gnu::no_split_stack]] static void Run(Runner* runner, jmp_buf* env);
+    [[gnu::no_split_stack]] static auto Run(Runner* runner, jmp_buf* env) -> void;
     //
-    [[gnu::no_split_stack]] static void Switch(Context* from, Context* to);
+    [[gnu::no_split_stack]] static auto Switch(Context* from, Context* to) -> void;
     //
   private:
     Context _context;
@@ -109,7 +109,7 @@ namespace NAMESPACE {
   };
   //
   template<typename Runner>
-  void Coroutine::Run(Runner* runner, jmp_buf* env) {
+  auto Coroutine::Run(Runner* runner, jmp_buf* env) -> void {
     auto self = &(runner->_context);
     auto done = _setjmp(self->_env);
     if (0 == done) {
@@ -122,7 +122,7 @@ namespace NAMESPACE {
   }
   //
   template<typename Runner>
-  bool Coroutine::init(Runner& runner) {
+  auto Coroutine::init(Runner& runner) -> bool {
     ucontext_t context;
     auto done = getcontext(&context);
     if (0 not_eq done) {
@@ -154,22 +154,23 @@ namespace NAMESPACE {
     return true;
   }
   //
-  void Coroutine::SwitchIn() {
+  auto Coroutine::SwitchIn() -> void {
     auto from = Context::current;
     _context._link = Context::current;
     Context::current = &_context;
     Switch(from, &_context);
   }
   //
-  void Coroutine::SwitchOut() {
+  auto Coroutine::SwitchOut() -> void {
     Context::current = _context._link;
     Switch(&_context, Context::current);
   }
   //
-  void Coroutine::Switch(Context* from, Context* to) {
+  auto Coroutine::Switch(Context* from, Context* to) -> void {
     auto done = _setjmp(from->_env);
     if (0 == done) {
       _longjmp(to->_env, 1);
     }
   }
+  //
 } // namespace NAMESPACE

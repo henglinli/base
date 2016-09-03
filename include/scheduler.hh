@@ -18,32 +18,41 @@ class Scheduler {
  public:
   typedef Scheduler<Task, kMaxCPUs> Self;
   //
-  Scheduler();
-  ~Scheduler();
+  Scheduler() : _worker(), _last_victim(), _worker_threads(0) {}
   //
-  static bool Start(Self& scheduler);
+  virtual ~Scheduler() {
+    Abort();
+  }
   //
-  void Stop();
+  static auto Start(Self& scheduler) -> bool {
+    return scheduler.StartWorker(scheduler);
+  }
   //
-  void Abort();
+  inline auto Stop() -> void {
+    Signal<kStop>();
+  }
   //
-  bool ToSelf(Task* task);
+  inline auto Abort() -> void {
+    Signal<kAbort>();
+  }
   //
-  bool ToOther(Task* task);
+  auto ToSelf(Task* task) -> bool;
+  //
+  auto ToOther(Task* task) -> bool;
   //
  protected:
-  //
-  template<Status kStatus>
-  void Signal();
-  //
-  bool StartWorker(Self& scheduler);
   //
   template<typename, typename>
   friend class Worker;
   //
-  Task* Steal();
+  template<Status kStatus>
+  auto Signal() -> void;
   //
-  uint32_t ChooseVictim();
+  auto StartWorker(Self& scheduler) -> bool;
+  //
+  auto Steal() -> Task*;
+  //
+  auto ChooseVictim() -> uint32_t;
   //
  private:
   Worker<Self, Task> _worker[kMaxCPUs];
@@ -52,24 +61,8 @@ class Scheduler {
 }; // class Scheduler
 //
 template<typename Task, uint32_t kMaxCPUs>
-Scheduler<Task, kMaxCPUs>::Scheduler()
-    : _worker()
-    , _last_victim()
-    , _worker_threads(0) {}
-//
-template<typename Task, uint32_t kMaxCPUs>
-Scheduler<Task, kMaxCPUs>::~Scheduler() {
-  Abort();
-}
-//
-template<typename Task, uint32_t kMaxCPUs>
-bool Scheduler<Task, kMaxCPUs>::Start(Self& scheduler) {
-  return scheduler.StartWorker(scheduler);
-}
-//
-template<typename Task, uint32_t kMaxCPUs>
 template<Status kStatus>
-void Scheduler<Task, kMaxCPUs>::Signal() {
+auto Scheduler<Task, kMaxCPUs>::Signal() -> void {
   static_assert(kStatus == kStop or kStatus == kAbort, "should kStop or kAbort");
   Status status(kUndefined);
   for(size_t i(0); i < _worker_threads; ++i) {
@@ -83,17 +76,7 @@ void Scheduler<Task, kMaxCPUs>::Signal() {
 }
 //
 template<typename Task, uint32_t kMaxCPUs>
-void Scheduler<Task, kMaxCPUs>::Stop() {
-  Signal<kStop>();
-}
-//
-template<typename Task, uint32_t kMaxCPUs>
-void Scheduler<Task, kMaxCPUs>::Abort() {
-  Signal<kAbort>();
-}
-//
-template<typename Task, uint32_t kMaxCPUs>
-bool Scheduler<Task, kMaxCPUs>::ToSelf(Task* task) {
+auto Scheduler<Task, kMaxCPUs>::ToSelf(Task* task) -> bool {
   if (nullptr not_eq task) {
     auto which = Processor<Task>::Current();
     return _worker[which].Add(task);
@@ -102,7 +85,7 @@ bool Scheduler<Task, kMaxCPUs>::ToSelf(Task* task) {
 }
 //
 template<typename Task, uint32_t kMaxCPUs>
-bool Scheduler<Task, kMaxCPUs>::ToOther(Task* task) {
+auto Scheduler<Task, kMaxCPUs>::ToOther(Task* task) -> bool {
   if (nullptr not_eq task) {
     auto which = Processor<Task>::Current();
     return _worker[which].Add(task);
@@ -111,7 +94,7 @@ bool Scheduler<Task, kMaxCPUs>::ToOther(Task* task) {
 }
 //
 template<typename Task, uint32_t kMaxCPUs>
-bool Scheduler<Task, kMaxCPUs>::StartWorker(Self& scheduler) {
+auto Scheduler<Task, kMaxCPUs>::StartWorker(Self& scheduler) -> bool {
   auto cpus = Processor<Task>::Count();
   _worker_threads = cpus < kMaxCPUs ? cpus : kMaxCPUs;
   int done(0);
@@ -130,13 +113,13 @@ bool Scheduler<Task, kMaxCPUs>::StartWorker(Self& scheduler) {
 }
 //
 template<typename Task, uint32_t kMaxCPUs>
-Task* Scheduler<Task, kMaxCPUs>::Steal() {
+auto Scheduler<Task, kMaxCPUs>::Steal() -> Task* {
   auto victim = Self::ChooseVictim();
   return _worker[victim].GetTask();
 }
 //
 template<typename Task, uint32_t kMaxCPUs>
-uint32_t Scheduler<Task, kMaxCPUs>::ChooseVictim() {
+auto Scheduler<Task, kMaxCPUs>::ChooseVictim() -> uint32_t {
   auto self = Processor<Task>::Current();
   auto victim = _last_victim[self];
   while(true) {

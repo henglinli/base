@@ -28,24 +28,24 @@ class Thread {
   //
   typedef Thread<Impl> Self;
   //
-  static int Run(Self& impl) {
+  static auto Run(Self& impl) -> int {
     return impl.RunImpl(impl);
   }
   //
-  static int Run(Self& impl, int cpu) {
+  static auto Run(Self& impl, int cpu) -> int {
     return impl.RunImpl(impl, cpu);
   }
   //
-  static int RunBackgroud(Self& impl) {
+  static auto RunBackgroud(Self& impl) -> int {
     return impl.RunBackgroudImpl(impl);
   }
   //
-  static int RunBackgroud(Self& impl, int cpu) {
+  static auto RunBackgroud(Self& impl, int cpu) -> int {
     return impl.RunBackgroudImpl(impl, cpu);
   }
   //
   template<typename Value>
-  int Join(Value& value) {
+  auto Join(Value& value) -> int {
     if (kJoinable not_eq _state) {
       return -1;
     }
@@ -60,7 +60,7 @@ class Thread {
     return done;
   }
   //
-  void Yield() {
+  auto Yield() -> void {
 #if __APPLE__
     pthread_yield_np();
 #elif __linux__
@@ -71,16 +71,16 @@ class Thread {
   }
   //
  protected:
-  void* RunLoop() {
+  auto RunLoop() -> void* {
     return static_cast<Impl*>(this)->Loop();
   }
   //
-  static void* ThreadMain(void* arg) {
+  static auto ThreadMain(void* arg) -> void* {
     auto task = static_cast<Self*>(arg);
     return task->RunLoop();
   }
   //
-  int RunImpl(Self& impl) {
+  auto RunImpl(Self& impl) -> int {
     if (kInit not_eq _state) {
       return -1;
     }
@@ -91,7 +91,7 @@ class Thread {
     return done;
   }
   //
-  int RunImpl(Self& impl, int cpu) {
+  auto RunImpl(Self& impl, int cpu) -> int {
     if (kInit not_eq _state) {
       return -1;
     }
@@ -118,7 +118,7 @@ class Thread {
     return result;
   }
   //
-  int RunBackgroudImpl(Self& impl) {
+  auto RunBackgroudImpl(Self& impl) -> int {
     if (kInit not_eq _state) {
       return -1;
     }
@@ -142,7 +142,7 @@ class Thread {
     return result;
   }
   //
-  int RunBackgroudImpl(Self& impl, int cpu) {
+  auto RunBackgroudImpl(Self& impl, int cpu) -> int {
     if (kInit not_eq _state) {
       return -1;
     }

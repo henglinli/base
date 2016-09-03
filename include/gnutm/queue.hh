@@ -23,13 +23,8 @@ class StailQ {
   };
   //
   StailQ(): _first(nullptr), _last(&_first) {}
-  //
-  void PushSingle(Value* node) {
-    *_last = node;
-    _last = &(node->_next);
-  }
   // insert tail
-  void Push(Value* node) {
+  auto Push(Value* node) -> void {
     node->_next = nullptr;
     __transaction_atomic {
       *_last = node;
@@ -37,7 +32,7 @@ class StailQ {
     }
   }
   // remove head
-  Value* Pop() {
+  auto Pop() -> Value* {
     Value* first(_first);
     __transaction_atomic {
       if (nullptr != _first) {

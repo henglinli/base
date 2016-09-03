@@ -11,7 +11,7 @@ struct Task: public gnutm::StailQ<Task>::Node {
   bool _ok;
   Task(): _ok(false) {}
   //
-  bool DoWork() {
+  auto DoWork() -> bool {
     size_t sum(0);
     for (size_t i(0); sum < kTasks; ++i) {
       ++sum;

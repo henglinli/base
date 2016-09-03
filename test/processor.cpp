@@ -20,5 +20,5 @@ TEST(processor, api) {
   EXPECT_GE(stap, 1U);
   uint32_t count = Processor<Task>::Count();
   printf("cpus %u\n", count);
-  EXPECT_GE(count, 1);
+  EXPECT_GE(count, 1u);
 }

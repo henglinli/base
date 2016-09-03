@@ -13,7 +13,7 @@ struct Task: public gnutm::StailQ<Task>::Node {
   //
   int _n;
   bool _ok;
-  bool DoWork() {
+  auto DoWork() -> bool {
     if (not _ok) {
       printf("%d|%d ", _ok, _n);
       _ok = true;

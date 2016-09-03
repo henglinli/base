@@ -4,7 +4,7 @@
 //
 namespace NAMESPACE {
 //
-  enum Status {
+  enum Status: int {
     kUndefined,
     kInit,
     kReady,

@@ -16,11 +16,11 @@ namespace NAMESPACE {
         Unlink();
       }
       //
-      Node* Next() const {
+      auto Next() const -> Node* {
         return _next;
       }
       //
-      void Unlink() {
+      auto Unlink() -> void {
         if (nullptr not_eq _next) {
           _next->_prev = _prev;
         }
@@ -39,7 +39,7 @@ namespace NAMESPACE {
     //
     List() : _first(nullptr) {}
     //
-    void Push(Node* other) {
+    auto Push(Node* other) -> void {
       if (nullptr not_eq (other->_next = _first)) {
         _first->_prev = &(other->_next);
       }
@@ -47,11 +47,11 @@ namespace NAMESPACE {
       other->_prev = &_first;
     }
     //
-    Node* First() const {
+    auto First() const -> Node* {
       return _first;
     }
     //
-    bool Empty() const {
+    auto Empty() const -> bool {
       return nullptr == _first;
     }
     //

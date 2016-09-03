@@ -55,51 +55,15 @@ public:
     }
   }
   //
-  bool MakeStack(size_t stack_size = kDefaultStackSize) {
-    stack_size = stack_size > kDefaultStackSize ? stack_size : kDefaultStackSize;
-    size_t reminder = stack_size % kPageSize;
-    if (0 not_eq reminder) {
-      stack_size += kPageSize - reminder;
-    }
-    size_t size(0);
-    _stack_base = __splitstack_makecontext(stack_size, _context, &size);
-    if (nullptr == _stack_base) {
-      return false;
-    }
-    // get stack base
-    _stack_base = static_cast<char*>(_stack_base) + size;
-    int block(0);
-    __splitstack_block_signals_context(_context, &block, nullptr);
-    return true;
-  }
+  auto MakeStack(size_t stack_size = kDefaultStackSize) -> bool;
   //
   template<typename Task>
-      void RunTask(Routine<Task>& task) {
-    static_assert(__is_base_of(Routine<Task>, Task), "Task must inherit from Routine<Task>");
-    Jmpbuf env;
-    auto done = __builtin_setjmp(env);
-    if (0 == done) {
-      done = __builtin_setjmp(_env);
-      if (0 == done) {
-        size_t frame_size = static_cast<char*>(_env[FP]) - static_cast<char*>(_env[SP]);
-        if (frame_size bitand (16-1)) {
-          frame_size += 16 - (frame_size bitand (16-1));
-        }
-        assert(frame_size < 4096);
-        _env[SP] = reinterpret_cast<char*>(_stack_base) - frame_size;
-        Longjmp(_env);
-      }
-      // Note: new stack go here
-      task.RunTask();
-      Longjmp(env);
-      __builtin_unreachable();
-    }
-  }
+  auto RunTask(Routine<Task>& task) -> void;
   //
 protected:
   typedef void* Jmpbuf[kGCCJmpBufferSize];
   //
-  [[gnu::noinline]] static void Longjmp(Jmpbuf env) {
+  [[gnu::noinline]] static auto Longjmp(Jmpbuf env) -> void {
     __builtin_longjmp(env, 1);
   }
   //
@@ -111,4 +75,46 @@ private:
   //
   DISALLOW_COPY_AND_ASSIGN(Fiber);
 };
+//
+auto Fiber::MakeStack(size_t stack_size) -> bool {
+  stack_size = stack_size > kDefaultStackSize ? stack_size : kDefaultStackSize;
+  size_t reminder = stack_size % kPageSize;
+  if (0 not_eq reminder) {
+    stack_size += kPageSize - reminder;
+  }
+  size_t size(0);
+  _stack_base = __splitstack_makecontext(stack_size, _context, &size);
+  if (nullptr == _stack_base) {
+    return false;
+  }
+  // get stack base
+  _stack_base = static_cast<char*>(_stack_base) + size;
+  int block(0);
+  __splitstack_block_signals_context(_context, &block, nullptr);
+  return true;
+}
+//
+template<typename Task>
+auto Fiber::RunTask(Routine<Task>& task) -> void {
+  static_assert(__is_base_of(Routine<Task>, Task), "Task must inherit from Routine<Task>");
+  Jmpbuf env;
+  auto done = __builtin_setjmp(env);
+  if (0 == done) {
+    done = __builtin_setjmp(_env);
+    if (0 == done) {
+      size_t frame_size = static_cast<char*>(_env[FP]) - static_cast<char*>(_env[SP]);
+      if (frame_size bitand (16-1)) {
+        frame_size += 16 - (frame_size bitand (16-1));
+      }
+      assert(frame_size < 4096);
+      _env[SP] = reinterpret_cast<char*>(_stack_base) - frame_size;
+      Longjmp(_env);
+    }
+    // Note: new stack go here
+    task.RunTask();
+    Longjmp(env);
+    __builtin_unreachable();
+  }
+}
+//
 } // namespace NAMESPACE

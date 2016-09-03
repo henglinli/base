@@ -13,19 +13,19 @@ class NetPoll {
   NetPoll() = default;
   ~NetPoll() = default;
   //
-  int Init() {
+  auto Init() -> int {
     return static_cast<Impl*>(this)->init();
   }
   //
-  int Open(int fd, void *ptr) {
+  auto Open(int fd, void *ptr) -> int {
     return static_cast<Impl*>(this)->open(fd, ptr);
   }
   //
-  int Close(int fd) {
+  auto Close(int fd) -> int {
     return static_cast<Impl*>(this)->close(fd);
   }
   //
-  int Poll(bool block) {
+  auto Poll(bool block) -> int {
     return static_cast<Impl*>(this)->poll(block);
   }
   //
@@ -41,22 +41,22 @@ public:
   ~NetPoller() = default;
   //
   template<typename Impl>
-      static int Init(NetPoll<Impl>& poll) {
+  static auto Init(NetPoll<Impl>& poll) -> int {
     return poll.Init();
   }
   //
   template<typename Impl>
-      static int Open(NetPoll<Impl>& poll, int fd, void *ptr) {
+  static auto Open(NetPoll<Impl>& poll, int fd, void *ptr) -> int {
     return poll.Open(fd, ptr);
   }
   //
   template<typename Impl>
-      static int Close(NetPoll<Impl>& poll, int fd) {
+  static auto Close(NetPoll<Impl>& poll, int fd) -> int {
     return poll.Close(fd);
   }
   //
   template<typename Impl>
-      static int Poll(NetPoll<Impl>& poll, bool block) {
+  static auto Poll(NetPoll<Impl>& poll, bool block) -> int {
     return poll.Poll(block);
   }
   //

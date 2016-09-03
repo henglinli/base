@@ -15,30 +15,30 @@ class Processor {
   //
   Processor(): _task_queue() {}
   //
-  inline static uint32_t Current() {
+  inline static auto Current() -> uint32_t {
     _timestap = __rdtscp(&_number);
     return _number;
   }
   //
-  inline static uint64_t Timestap() {
+  inline static auto Timestap() -> uint64_t {
     return __rdtsc();
   }
   //
-  inline static uint64_t Rdtscp(uint32_t* cpu) {
+  inline static auto Rdtscp(uint32_t* cpu) -> uint64_t {
     return __rdtscp(cpu);
   }
   //
-  static void Relax(uint32_t count) {
+  static auto Relax(uint32_t count) -> void {
     while(count--) {
       __pause();
     }
   }
   //
-  static constexpr size_t MaxCPUs() {
+  static constexpr auto MaxCPUs() -> size_t {
     return sizeof(cpu_set_t)*8;
   }
   //
-  static uint32_t Count() {
+  static auto Count() -> uint32_t {
     cpu_set_t set;
     int done = sched_getaffinity(0, sizeof(set), &set);
     if (0 not_eq done) {
@@ -53,11 +53,11 @@ class Processor {
     return count? count: 1;
   }
   //
-  void Push(Task* task) {
+  inline auto Push(Task* task) -> void {
     _task_queue.Push(task);
   }
   //
-  Task* Pop() {
+  inline auto Pop() -> Task* {
     return _task_queue.Pop();
   }
   //
