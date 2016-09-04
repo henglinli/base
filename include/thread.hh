@@ -16,7 +16,7 @@ class Thread {
     kDetached,
     kExited
   };
-  Thread(): _state(kInit), _tid(0), _attr() {
+  Thread(): _state(kInit), _tid(0), _attr(), _start() {
     static_assert(__is_base_of(Thread<Impl>, Impl), "Impl must inherit from Thread<Impl>");
   }
   //
@@ -71,24 +71,60 @@ class Thread {
   }
   //
  protected:
+  //
+  class Condition {
+  public:
+    Condition(): _mutex(PTHREAD_MUTEX_INITIALIZER), _cond(PTHREAD_COND_INITIALIZER) {}
+    //
+    ~Condition() {
+      pthread_cond_destroy(&_cond);
+      pthread_mutex_destroy(&_mutex);
+    }
+    //
+    auto Wait() -> void {
+      pthread_mutex_lock(&_mutex);
+      pthread_cond_wait(&_cond, &_mutex);
+      pthread_mutex_unlock(&_mutex);
+    }
+    //
+    auto Signal() -> void {
+      pthread_cond_signal(&_cond);
+    }
+    //
+  private:
+    pthread_mutex_t _mutex;
+    pthread_cond_t _cond;
+  };
+  //
+  template<bool kBackground>
   auto RunLoop() -> void* {
+    // set state
+    if (kBackground) {
+      _state = kDetached;
+    } else {
+      _state = kJoinable;
+    }
+    // signal start
+    _start.Signal();
     return static_cast<Impl*>(this)->Loop();
   }
   //
+  template<bool kBackground>
   static auto ThreadMain(void* arg) -> void* {
     auto task = static_cast<Self*>(arg);
-    return task->RunLoop();
+    return task->RunLoop<kBackground>();
   }
   //
   auto RunImpl(Self& impl) -> int {
     if (kInit not_eq _state) {
       return -1;
     }
-    auto done = pthread_create(&_tid, nullptr, ThreadMain, static_cast<void*>(&impl));
-    if (0 == done) {
-      _state = kJoinable;
+    auto done = pthread_create(&_tid, nullptr, ThreadMain<false>, &impl);
+    if (0 not_eq done) {
+      return -1;
     }
-    return done;
+    _start.Wait();
+    return 0;
   }
   //
   auto RunImpl(Self& impl, int cpu) -> int {
@@ -107,15 +143,13 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    auto result = pthread_create(&_tid, &_attr, ThreadMain, static_cast<void*>(&impl));
-    done = pthread_attr_destroy(&_attr);
+    done = pthread_create(&_tid, &_attr, ThreadMain<false>, &impl);
+    pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    if (0 == result) {
-      _state = kJoinable;
-    }
-    return result;
+    _start.Wait();
+    return 0;
   }
   //
   auto RunBackgroudImpl(Self& impl) -> int {
@@ -131,15 +165,13 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    auto result = pthread_create(&_tid, &_attr, ThreadMain, static_cast<void*>(&impl));
-    done = pthread_attr_destroy(&_attr);
+    done = pthread_create(&_tid, &_attr, ThreadMain<true>, &impl);
+    pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    if (0 == result) {
-      _state = kDetached;
-    }
-    return result;
+    _start.Wait();
+    return done;
   }
   //
   auto RunBackgroudImpl(Self& impl, int cpu) -> int {
@@ -164,21 +196,20 @@ class Thread {
       return -1;
     }
     // create thread
-    auto result = pthread_create(&_tid, &_attr, ThreadMain, static_cast<void*>(&impl));
-    done = pthread_attr_destroy(&_attr);
+    done = pthread_create(&_tid, &_attr, ThreadMain<true>, &impl);
+    pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    if (0 == result) {
-      _state = kDetached;
-    }
-    return result;
+    _start.Wait();
+    return 0;
   }
   //
  private:
   int _state;
   pthread_t _tid;
   pthread_attr_t _attr;
+  Condition _start;
   //
   DISALLOW_COPY_AND_ASSIGN(Thread);
 };

@@ -54,7 +54,7 @@ namespace NAMESPACE {
     thread_local static List<Context> list;
     thread_local static List<Context> free_list;
     thread_local static Context context0;
-    thread_local static Context *current;
+    thread_local static Context* current;
     //
     DISALLOW_COPY_AND_ASSIGN(Context);
   };
@@ -65,12 +65,12 @@ namespace NAMESPACE {
   thread_local Context* Context::current(nullptr);
   //
   namespace {
-    struct Init {
-      Init() {
+    struct Initiator {
+      Initiator() {
         Context::current = &Context::context0;
       }
     };
-    static Init init;
+    static Initiator initiator;
   }
   //
   class Coroutine {

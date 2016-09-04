@@ -24,6 +24,7 @@ extern "C" {
 namespace NAMESPACE {
 //
 const size_t kDefaultStackSize(12*1024);
+//
 const size_t kPageSize(4*1024);
 //
 const size_t kGCCJmpBufferSize(5);
@@ -37,17 +38,18 @@ enum {
 class Fiber final: public gnutm::StailQ<Fiber>::Node {
 public:
   template<typename Task>
-      struct Routine {
-    void RunTask() {
+  struct Routine {
+    auto RunTask() -> void {
       static_cast<Task*>(this)->Run();
     }
   };
   //
-  Fiber()
-      : _link(nullptr)
-      , _env()
-      , _context()
-      , _stack_base(nullptr) {}
+  typedef void* Jmpbuf[kGCCJmpBufferSize];
+  //
+  thread_local static Jmpbuf env0;
+  thread_local static Jmpbuf* current;
+  //
+  Fiber(): _link(nullptr), _env(), _context(), _stack_base(nullptr) {}
   //
   ~Fiber() {
     if (nullptr not_eq _stack_base) {
@@ -60,21 +62,91 @@ public:
   template<typename Task>
   auto RunTask(Routine<Task>& task) -> void;
   //
+  template<typename Task>
+  auto Init(Routine<Task>& task) -> bool {
+    static_assert(__is_base_of(Routine<Task>, Task), "Task must inherit from Routine<Task>");
+    if (nullptr == _stack_base) {
+      auto ok = MakeStack(kDefaultStackSize);
+      if (not ok) {
+        return false;
+      }
+    }
+    //
+    Jmpbuf env;
+    auto done = __builtin_setjmp(env);
+    if (0 == done) {
+      done = __builtin_setjmp(_env);
+      if (0 == done) {
+        size_t frame_size = static_cast<char*>(_env[FP]) - static_cast<char*>(_env[SP]);
+        if (frame_size bitand (16-1)) {
+          frame_size += 16 - (frame_size bitand (16-1));
+        }
+        assert(frame_size < 4096);
+        _env[SP] = reinterpret_cast<char*>(_stack_base) - frame_size;
+        Longjmp(_env);
+      }
+      // Note: new stack go here
+      done = __builtin_setjmp(_env);
+      if (0 == done) {
+        Longjmp(env);
+      }
+      while(true) {
+        task.RunTask();
+        int google(0);
+        printf("%p\n", &google);
+        SwitchOut();
+      }
+    }
+    //
+    return true;
+  }
+  //
+  auto SwitchIn() -> void {
+    printf("from=%p\n", Fiber::current);
+    auto from = Fiber::current;
+    _link = Fiber::current;
+    Fiber::current = &_env;
+    Switch(from, &_env);
+  }
+  //
+  auto SwitchOut() -> void {
+    Fiber::current = _link;
+    Switch(&_env, Fiber::current);
+  }
+  //
 protected:
-  typedef void* Jmpbuf[kGCCJmpBufferSize];
   //
   [[gnu::noinline]] static auto Longjmp(Jmpbuf env) -> void {
     __builtin_longjmp(env, 1);
   }
   //
+  inline auto Switch(Jmpbuf* from, Jmpbuf* to) -> void {
+    auto done = __builtin_setjmp(*from);
+    if (0 == done) {
+      Longjmp(*to);
+    }
+  }
+  //
 private:
-  Fiber* _link;
+  Jmpbuf* _link;
   Jmpbuf _env;
   void* _context[10];
   void* _stack_base;
   //
   DISALLOW_COPY_AND_ASSIGN(Fiber);
 };
+//
+thread_local Fiber::Jmpbuf Fiber::env0;
+thread_local Fiber::Jmpbuf* Fiber::current(nullptr);
+//
+namespace {
+struct Initiator {
+  Initiator() {
+    Fiber::current = &Fiber::env0;
+  }
+};
+static Initiator initiator;
+}
 //
 auto Fiber::MakeStack(size_t stack_size) -> bool {
   stack_size = stack_size > kDefaultStackSize ? stack_size : kDefaultStackSize;
@@ -113,7 +185,6 @@ auto Fiber::RunTask(Routine<Task>& task) -> void {
     // Note: new stack go here
     task.RunTask();
     Longjmp(env);
-    __builtin_unreachable();
   }
 }
 //

@@ -28,21 +28,21 @@ struct Go: public Fiber::Routine<Go> {
   void Run() {
     Fiber f;
     Task t;
-    auto ok = f.MakeStack();
+    auto ok = f.Init(t);
     EXPECT_TRUE(ok);
-    f.RunTask(t);
+    //f.SwitchIn();
     std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //
-TEST(coroutine, api) {
+TEST(Fiber, api) {
   Task t;
   Work w;
   Go g;
   //
   Fiber f;
   auto ok = f.MakeStack(64*1024);
-  EXPECT_EQ(true, ok);
+  EXPECT_TRUE(ok);
   f.RunTask(t);
   f.RunTask(w);
   f.RunTask(g);
@@ -50,4 +50,16 @@ TEST(coroutine, api) {
   Error error;
   //f.RunTask(error);
 }
+//
+#if 0
+TEST(Fiber, new_api) {
+  Go g;
+  //
+  Fiber f;
+  auto ok = f.Init(g);
+  EXPECT_TRUE(ok);
+  f.SwitchIn();
+  f.SwitchIn();
+}
+#endif
 //
