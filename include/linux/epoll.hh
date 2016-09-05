@@ -1,15 +1,14 @@
 // -*-coding:utf-8-unix;-*-
-//
 #pragma once
 //
 #include <errno.h>
 #include <unistd.h>
-#ifdef __linux__
 #include <sys/epoll.h>
-#endif
 #include "netpoll.hh"
 //
 namespace NAMESPACE {
+//
+namespace Linux {
 //
 const size_t kDefaultEvents(128);
 //
@@ -108,5 +107,7 @@ private:
   //
   DISALLOW_COPY_AND_ASSIGN(Epoll);
 };
+//
+} // namespace Linux
 //
 } // namespace NAMESPACE

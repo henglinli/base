@@ -22,6 +22,23 @@ class Task: public Thread<Task<Value> > {
 //
 const int kOk(8);
 //
+PthreadCond start;
+void* run(void* arg) {
+  auto start = reinterpret_cast<PthreadCond*>(arg);
+  PthreadCond::Signal(*start);
+  return nullptr;
+}
+//
+TEST(pthread, api) {
+  pthread_t tid;
+  auto done = pthread_create(&tid, nullptr, run, &start);
+  EXPECT_EQ(0, done);
+  done = PthreadCond::Wait(start);
+  EXPECT_EQ(0, done);
+  done = pthread_join(tid, nullptr);
+  EXPECT_EQ(0, done);
+}
+//
 TEST(Thread, Run) {
   Task<int> task(kOk);
   // Run

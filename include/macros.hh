@@ -21,18 +21,30 @@ typedef __uint128_t uint128_t;
 #define DISALLOW_COPY_AND_ASSIGN(TypeName) \
   TypeName(const TypeName&) = delete;      \
   void operator=(const TypeName&) = delete
-// do nothing
-template<typename T>
-void DoNothing(T) {
-  // nil
+// do nothingfsaf saf
+template<typename... T>
+void DoNothing(T...) {
+  // nilsf
 }
 //
-template<typename T1, typename T2>
-void DoNothing(T1, T2) {
-  // nil
-}
 #ifdef NDEBUG
 #define printf(...) do {} while(0)
 #else // NDEBUG
 // printf
 #endif // NDEBUG
+//
+#ifdef __linux
+#define os_linux 1
+#else // __linux
+#ifdef __linux__
+#define os_linux 1
+#else // __linux__
+#ifdef __gnu_linux__
+#define os_linux 1
+#else // __gnu_linux__
+#ifdef linux
+#define os_linux 1
+#endif // linux
+#endif // __gnu_linux__
+#endif // __linux__
+#endif // __linux

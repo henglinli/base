@@ -1,8 +1,11 @@
 // -*-coding:utf-8-unix;-*-
 #pragma once
+//
 #include <pthread.h>
 #include <sched.h>
 #include <stdint.h>
+#include "atomic.hh"
+#include "condtion.hh"
 #include "macros.hh"
 //
 namespace NAMESPACE {
@@ -72,40 +75,18 @@ class Thread {
   //
  protected:
   //
-  class Condition {
-  public:
-    Condition(): _mutex(PTHREAD_MUTEX_INITIALIZER), _cond(PTHREAD_COND_INITIALIZER) {}
-    //
-    ~Condition() {
-      pthread_cond_destroy(&_cond);
-      pthread_mutex_destroy(&_mutex);
-    }
-    //
-    auto Wait() -> void {
-      pthread_mutex_lock(&_mutex);
-      pthread_cond_wait(&_cond, &_mutex);
-      pthread_mutex_unlock(&_mutex);
-    }
-    //
-    auto Signal() -> void {
-      pthread_cond_signal(&_cond);
-    }
-    //
-  private:
-    pthread_mutex_t _mutex;
-    pthread_cond_t _cond;
-  };
-  //
   template<bool kBackground>
   auto RunLoop() -> void* {
     // set state
+    int expect(kInit);
+    int desired(kJoinable);
     if (kBackground) {
-      _state = kDetached;
-    } else {
-      _state = kJoinable;
+      desired = kDetached;
     }
-    // signal start
-    _start.Signal();
+    auto ok = atomic::CAS(&_state, &expect, desired);
+    if (ok) {
+      Cond::Signal(_start);
+    }
     return static_cast<Impl*>(this)->Loop();
   }
   //
@@ -123,7 +104,10 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    _start.Wait();
+    auto expect = atomic::Load(&_state);
+    if (kJoinable not_eq expect) {
+      Cond::Wait(_start);
+    }
     return 0;
   }
   //
@@ -148,7 +132,10 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    _start.Wait();
+    auto expect = atomic::Load(&_state);
+    if (kJoinable not_eq expect) {
+      Cond::Wait(_start);
+    }
     return 0;
   }
   //
@@ -170,7 +157,10 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    _start.Wait();
+    auto expect = atomic::Load(&_state);
+    if (kDetached not_eq expect) {
+      Cond::Wait(_start);
+    }
     return done;
   }
   //
@@ -201,7 +191,10 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    _start.Wait();
+    auto expect = atomic::Load(&_state);
+    if (kDetached not_eq expect) {
+      Cond::Wait(_start);
+    }
     return 0;
   }
   //
@@ -209,7 +202,11 @@ class Thread {
   int _state;
   pthread_t _tid;
   pthread_attr_t _attr;
-  Condition _start;
+#ifdef os_linux
+  typedef PthreadCond Cond;
+  //int _start;
+#endif
+  Cond _start;
   //
   DISALLOW_COPY_AND_ASSIGN(Thread);
 };

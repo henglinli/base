@@ -6,7 +6,7 @@
 using namespace NAMESPACE;
 //
 TEST(netpoll, api) {
-  Epoll epoll;
+  Linux::Epoll epoll;
   int fd = NetPoller::Init(epoll);
   EXPECT_LT(0, fd);
   fd = 1;
