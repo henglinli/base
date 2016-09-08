@@ -47,17 +47,21 @@ namespace NAMESPACE {
       _last = &(other->_next);
     }
     //
+    auto Remove(T* other) ->void {
+      if (nullptr != other->_next) {
+        other->_next->_prev = other->_prev;
+      } else {
+        _last = other->_prev;
+      }
+      *(other->_prev) = other->_next;
+    }
+
     auto Pop() -> T* {
       if (nullptr == _first) {
         return nullptr;
       }
       auto first = _first;
-      if (nullptr != first->_next) {
-        first->_next->_prev = first->_prev;
-      } else {
-        _last = first->_prev;
-      }
-      *(first->_prev) = first->_next;
+      Remove(first);
       return first;
     }
     //

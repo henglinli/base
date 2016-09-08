@@ -9,24 +9,46 @@ struct Error {
 };
 //
 struct Task {
-  void Run(){
+  auto Run() -> void {
     int google(0);
-    std::cout << (&google) << std::endl;
-    std::cout << __PRETTY_FUNCTION__ << (++_n) << std::endl;
+    std::cout << (&google) << " " <<  __PRETTY_FUNCTION__ << (++_n) << std::endl;
   }
   static int _n;
 };
 int Task::_n(0);
 //
-struct Go {
-  void Run() {
+struct Work {
+  auto Run() -> void {
     auto fiber = Fiber::Fork();
     EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
     std::cout << fiber << std::endl;
     fiber->Switch<Task>();
     Fiber::Join(fiber);
     EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    //
+    int google(0);
+    std::cout << (&google) << " " <<  __PRETTY_FUNCTION__ << std::endl;
+  }
+};
+//
+struct Go {
+  auto Run() -> void {
+    auto fiber = Fiber::Fork();
+    EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
+    std::cout << fiber << std::endl;
+    fiber->Switch<Task>();
+    Fiber::Join(fiber);
+    EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
+    //
+    fiber = Fiber::Fork();
+    EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
+    std::cout << fiber << std::endl;
+    fiber->Switch<Work>();
+    Fiber::Join(fiber);
+    EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
+    //
+    int google(0);
+    std::cout << (&google) << " " <<  __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //
@@ -41,7 +63,7 @@ TEST(Fiber, api) {
   fiber = Fiber::Fork();
   EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
   std::cout << fiber << std::endl;
-  fiber->Switch<Task>();
+  fiber->Switch<Work>();
   Fiber::Join(fiber);
   EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
 }

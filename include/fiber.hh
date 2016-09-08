@@ -45,7 +45,7 @@ public:
   //
 protected:
   //
-  Fiber() = default;
+  Fiber(): _parent(nullptr), _children(), _env(), _stack() {}
   //
   [[gnu::noinline]] static auto Longjmp(Jmpbuf env) -> void {
     __builtin_longjmp(env, 1);
@@ -55,7 +55,7 @@ private:
   Fiber* _parent;
   TailQ<Fiber> _children;
   Jmpbuf _env;
-  char _stack[kDefaultStackSize-sizeof(Fiber*)-sizeof(TailQ<Fiber>)-sizeof(Jmpbuf)];
+  char _stack[kDefaultStackSize-sizeof(Jmpbuf)-2*sizeof(TailQ<Fiber>)-2*sizeof(Fiber*)];
   //
   DISALLOW_COPY_AND_ASSIGN(Fiber);
 };
@@ -75,6 +75,7 @@ static Initiator initiator;
 //
 auto Fiber::Fork() -> Fiber* {
   auto fiber = idle_list.Pop();
+  static_assert(sizeof(*fiber) == kDefaultStackSize, "invalid stack size");
   if (nullptr == fiber) {
     auto tmp = __builtin_malloc(sizeof(*fiber));
     if (nullptr == tmp) {
@@ -84,6 +85,7 @@ auto Fiber::Fork() -> Fiber* {
   }
   //
   current->_children.Push(fiber);
+  fiber->_parent = current;
   fiber->_children.Init();
   //
   return fiber;
@@ -98,7 +100,9 @@ auto Fiber::Join(Fiber*& fiber) -> void {
 //
 template<typename Task>
 auto Fiber::Switch() -> void {
+  auto parent = current;
   current = this;
+  //
   Jmpbuf env;
   auto done = __builtin_setjmp(env);
   if (0 == done) {
@@ -117,6 +121,7 @@ auto Fiber::Switch() -> void {
     task.Run();
     Longjmp(env);
   }
+  current = parent;
 }
 //
 } // namespace NAMESPACE
