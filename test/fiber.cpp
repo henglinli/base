@@ -8,7 +8,7 @@ struct Error {
   void Run(){}
 };
 //
-struct Task: public Fiber::Routine<Task> {
+struct Task {
   void Run(){
     int google(0);
     std::cout << (&google) << std::endl;
@@ -18,48 +18,31 @@ struct Task: public Fiber::Routine<Task> {
 };
 int Task::_n(0);
 //
-struct Work: public Fiber::Routine<Work> {
+struct Go {
   void Run() {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
-  }
-};
-//
-struct Go: public Fiber::Routine<Go> {
-  void Run() {
-    Fiber f;
-    Task t;
-    auto ok = f.Init(t);
-    EXPECT_TRUE(ok);
-    //f.SwitchIn();
+    auto fiber = Fiber::Fork();
+    EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
+    std::cout << fiber << std::endl;
+    fiber->Switch<Task>();
+    Fiber::Join(fiber);
+    EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
     std::cout << __PRETTY_FUNCTION__ << std::endl;
   }
 };
 //
 TEST(Fiber, api) {
-  Task t;
-  Work w;
-  Go g;
+  auto fiber = Fiber::Fork();
+  EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
+  std::cout << fiber << std::endl;
+  fiber->Switch<Go>();
+  Fiber::Join(fiber);
+  EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
   //
-  Fiber f;
-  auto ok = f.MakeStack(64*1024);
-  EXPECT_TRUE(ok);
-  f.RunTask(t);
-  f.RunTask(w);
-  f.RunTask(g);
-  //
-  Error error;
-  //f.RunTask(error);
+  fiber = Fiber::Fork();
+  EXPECT_NE(static_cast<Fiber*>(nullptr), fiber);
+  std::cout << fiber << std::endl;
+  fiber->Switch<Task>();
+  Fiber::Join(fiber);
+  EXPECT_EQ(static_cast<Fiber*>(nullptr), fiber);
 }
-//
-#if 0
-TEST(Fiber, new_api) {
-  Go g;
-  //
-  Fiber f;
-  auto ok = f.Init(g);
-  EXPECT_TRUE(ok);
-  f.SwitchIn();
-  f.SwitchIn();
-}
-#endif
 //

@@ -11,7 +11,7 @@
 #include <ucontext.h>
 #include <setjmp.h>
 #include "macros.hh"
-#include "list.hh"
+#include "queue.hh"
 // split stack function
 extern "C" {
   void __splitstack_getcontext(void* context[10]);
@@ -37,7 +37,7 @@ namespace NAMESPACE {
   //
   const size_t kStackSize(SIGSTKSZ);
   //
-  class Context final: public List<Context>::Node {
+  class Context final: public TailQ<Context>::Node {
   public:
     Context(): _link(nullptr), _env(), _stack(nullptr), _stack_context() {}
     ~Context() = default;
@@ -51,16 +51,16 @@ namespace NAMESPACE {
     friend class Coroutine;
     //
   public:
-    thread_local static List<Context> list;
-    thread_local static List<Context> free_list;
+    thread_local static TailQ<Context> list;
+    thread_local static TailQ<Context> free_list;
     thread_local static Context context0;
     thread_local static Context* current;
     //
     DISALLOW_COPY_AND_ASSIGN(Context);
   };
   //
-  thread_local List<Context> Context::list;
-  thread_local List<Context> Context::free_list;
+  thread_local TailQ<Context> Context::list;
+  thread_local TailQ<Context> Context::free_list;
   thread_local Context Context::context0;
   thread_local Context* Context::current(nullptr);
   //

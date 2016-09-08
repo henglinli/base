@@ -1,16 +1,16 @@
 // -*-coding:utf-8-unix;-*-
 #include "gtest/gtest.h"
-#include "list.hh"
+#include "queue.hh"
 //
 using namespace NAMESPACE;
 //
-struct Context final: public List<Context>::Node {
-  static thread_local List<Context> list;
+struct Context final: public TailQ<Context>::Node {
+  static thread_local TailQ<Context> list;
 };
 //
-thread_local List<Context> Context::list;
+thread_local TailQ<Context> Context::list;
 //
-TEST(List, api) {
+TEST(TailQ, api) {
   Context c[4];
   auto empty = Context::list.Empty();
   EXPECT_EQ(true, empty);
@@ -20,7 +20,7 @@ TEST(List, api) {
   Context::list.Push(&c[1]);
   first = Context::list.First();
   auto next = first->Next();
-  EXPECT_EQ(next, &c[0]);
+  EXPECT_EQ(next, &c[1]);
   empty = Context::list.Empty();
   EXPECT_EQ(false, empty);
 }
