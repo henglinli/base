@@ -15,6 +15,7 @@ class Thread {
  public:
   enum: int {
     kInit,
+    kRunning,
     kJoinable,
     kDetached,
     kExited
@@ -23,7 +24,7 @@ class Thread {
     static_assert(__is_base_of(Thread<Impl>, Impl), "Impl must inherit from Thread<Impl>");
   }
   //
-  ~Thread() {
+  virtual ~Thread() {
     if (kJoinable == _state) {
       pthread_join(_tid, nullptr);
     }
@@ -56,11 +57,14 @@ class Thread {
     Value* result(nullptr);
     auto done = pthread_join(_tid, reinterpret_cast<void**>(&result));
     if (0 not_eq done) {
-      return done;
+      return -1;
+    }
+    if (nullptr == result) {
+      return -1;
     }
     value = *result;
     _state = kExited;
-    return done;
+    return 0;
   }
   //
   auto Yield() -> void {
@@ -75,40 +79,51 @@ class Thread {
   //
  protected:
   //
-  template<bool kBackground>
-  auto RunLoop() -> void* {
+  auto Wait(int desired) -> int {
+    auto done(-1);
+    int expect(kRunning);
+    while(not atomic::CAS(&_state, &expect, desired)) {
+      expect = kRunning;
+      done = Cond::Wait(_start);
+      if (0 not_eq done) {
+        return -1;
+      }
+    }
+    return 0;
+  }
+  //
+  auto Signal() -> int {
     // set state
     int expect(kInit);
-    int desired(kJoinable);
-    if (kBackground) {
-      desired = kDetached;
+    int desired(kRunning);
+    while(not atomic::CAS(&_state, &expect, desired)) {
+      expect = kInit;
     }
-    auto ok = atomic::CAS(&_state, &expect, desired);
-    if (ok) {
-      Cond::Signal(_start);
+    return Cond::Signal(_start);
+  }
+  //
+  auto RunLoop() -> void* {
+    auto done = Signal();
+    if (0 not_eq done) {
+      return nullptr;
     }
     return static_cast<Impl*>(this)->Loop();
   }
   //
-  template<bool kBackground>
   static auto ThreadMain(void* arg) -> void* {
     auto task = static_cast<Self*>(arg);
-    return task->RunLoop<kBackground>();
+    return task->RunLoop();
   }
   //
   auto RunImpl(Self& impl) -> int {
     if (kInit not_eq _state) {
       return -1;
     }
-    auto done = pthread_create(&_tid, nullptr, ThreadMain<false>, &impl);
+    auto done = pthread_create(&_tid, nullptr, ThreadMain, &impl);
     if (0 not_eq done) {
       return -1;
     }
-    auto expect = atomic::Load(&_state);
-    if (kJoinable not_eq expect) {
-      Cond::Wait(_start);
-    }
-    return 0;
+    return Wait(kJoinable);
   }
   //
   auto RunImpl(Self& impl, int cpu) -> int {
@@ -127,16 +142,12 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    done = pthread_create(&_tid, &_attr, ThreadMain<false>, &impl);
+    done = pthread_create(&_tid, &_attr, ThreadMain, &impl);
     pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    auto expect = atomic::Load(&_state);
-    if (kJoinable not_eq expect) {
-      Cond::Wait(_start);
-    }
-    return 0;
+    return Wait(kJoinable);
   }
   //
   auto RunBackgroudImpl(Self& impl) -> int {
@@ -152,16 +163,12 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    done = pthread_create(&_tid, &_attr, ThreadMain<true>, &impl);
+    done = pthread_create(&_tid, &_attr, ThreadMain, &impl);
     pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    auto expect = atomic::Load(&_state);
-    if (kDetached not_eq expect) {
-      Cond::Wait(_start);
-    }
-    return done;
+    return Wait(kDetached);
   }
   //
   auto RunBackgroudImpl(Self& impl, int cpu) -> int {
@@ -186,16 +193,12 @@ class Thread {
       return -1;
     }
     // create thread
-    done = pthread_create(&_tid, &_attr, ThreadMain<true>, &impl);
+    done = pthread_create(&_tid, &_attr, ThreadMain, &impl);
     pthread_attr_destroy(&_attr);
     if (0 not_eq done) {
       return -1;
     }
-    auto expect = atomic::Load(&_state);
-    if (kDetached not_eq expect) {
-      Cond::Wait(_start);
-    }
-    return 0;
+    return Wait(kDetached);
   }
   //
  private:

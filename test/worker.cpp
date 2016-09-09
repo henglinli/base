@@ -46,7 +46,7 @@ TEST(Worker, api) {
   }
   auto done = Worker<Scheduler, Task>::Start(worker, scheduler);
   EXPECT_EQ(0, done);
-  sleep(1);
+  //sleep(1);
   worker.Stop();
   auto status(kUndefined);
   done = worker.Join(status);

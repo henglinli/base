@@ -5,6 +5,7 @@
 #include "processor.hh"
 #include "thread.hh"
 #include "atomic.hh"
+#include "gnutm/queue.hh"
 //
 namespace NAMESPACE {
 //
@@ -13,6 +14,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
  public:
   //
   typedef Worker<Scheduler, Task> Self;
+  typedef Thread<Self> Base;
   //
   Worker();
   //
@@ -20,7 +22,9 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   //
   static auto Start(Self& worker, Scheduler& scheduler) -> int {
     worker._scheduler = &scheduler;
-    return Self::Run(worker);
+    auto done = Self::Run(worker);
+    worker._status = kReady;
+    return done;
   }
   //
   inline auto GetTask() -> Task* {
@@ -57,7 +61,8 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   Status _status;
   Scheduler* _scheduler;
   Task* _task;
-  Processor<Task> _processor;
+  gnutm::StailQ<Task> _processor;
+  bool _spin;
   //
   DISALLOW_COPY_AND_ASSIGN(Worker);
 };
@@ -67,7 +72,8 @@ Worker<Scheduler, Task>::Worker()
     : _status(kInit)
     , _scheduler(nullptr)
     , _task(nullptr)
-    , _processor() {}
+    , _processor()
+    , _spin(true) {}
 //
 template<typename Scheduler, typename Task>
 Worker<Scheduler, Task>::~Worker() {
@@ -76,20 +82,10 @@ Worker<Scheduler, Task>::~Worker() {
 //
 template<typename Scheduler, typename Task>
 auto Worker<Scheduler, Task>::Loop() -> Status* {
-  Status status(kInit);
-  bool ok(false);
-  while(true) {
-    ok = atomic::CAS(&_status, &status, kReady);
-    if (ok) {
-      break;
-    }
-  }
-  //
   const uint32_t spin_count(30);
-  bool spin(false);
+  //
   while(true) {
-    status = atomic::Load(&_status);
-    if(kAbort == status) {
+    if(kAbort == atomic::Load(&_status)) {
       break;
     }
     //
@@ -99,23 +95,22 @@ auto Worker<Scheduler, Task>::Loop() -> Status* {
       _task = _scheduler->Steal();
       if (nullptr == _task) {
         // other is empty
-        status = atomic::Load(&_status);
-        if (kStop == status) {
+        if (kStop == atomic::Load(&_status)) {
           break;
         }
         // try spin an then yield;
-        if (spin) {
-          Processor<Task>::Relax(spin_count);
+        if (_spin) {
+          Processor::Relax(spin_count);
+          _spin = false;
         } else {
-          spin = true;
-          Worker<Scheduler, Task>::Yield();
+          _spin = true;
+          Base::Yield();
         }
         continue;
       }
     }
     //
-    ok = _task->DoWork();
-    if (not ok) {
+    if (not _task->DoWork()) {
       _processor.Push(_task);
     }
   } // while

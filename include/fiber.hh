@@ -121,6 +121,8 @@ auto Fiber::Switch() -> void {
     task.Run();
     Longjmp(env);
   }
+  //
+  current->_children.Remove(this);
   current = parent;
 }
 //

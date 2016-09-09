@@ -11,7 +11,8 @@ namespace mpmc {
 template<typename Value>
 class Node {
  public:
-  Node() : _next(nullptr) {}
+  Node() = default;
+  virtual ~Node() = default;
   //
  protected:
  private:
@@ -32,13 +33,6 @@ class [[gnu::aligned(64)]] Queue {
     , _tail() {
     _tail._aba = 0;
     _tail._ptr = static_cast<Value*>(&_node);
-  }
-  //
-  void PushSingle(Value* value) {
-    // If we have a single producer, don't use an atomic instruction.
-    auto prev = _head;
-    _head = value;
-    prev->_next = value;
   }
   //
   void Push(Value* value) {

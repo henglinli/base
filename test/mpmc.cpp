@@ -31,13 +31,7 @@ TEST(mpmc, PushPop) {
   Session s[kSize];
   for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
     s[i]._value = i;
-    q.PushSingle(s+i);
-  }
-  //
-  Session s1[kSize];
-  for (size_t i(0); i < sizeof(s1)/sizeof(s[0]); ++i) {
-    s1[i]._value = i + kSize;
-    q.Push(s1+i);
+    q.Push(s+i);
   }
   //
   p = q.Pop();
@@ -49,33 +43,3 @@ TEST(mpmc, PushPop) {
   EXPECT_EQ(1, p->_value);
 }
 //
-class Google: public gnutm::StailQ<Google>::Node {
-public:
-  Google(): _value(0) {
-    //
-  }
-  int _value;
-};
-//
-TEST(gnutm, StailQ) {
-  gnutm::StailQ<Google> q;
-  Google* p(nullptr);
-  //
-  p = q.Pop();
-  EXPECT_EQ(nullptr, p);
-  //
-  Google s[kSize];
-  for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
-    s[i]._value = i + kSize;
-    q.Push(s+i);
-  }
-  //
-  for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
-    p = q.Pop();
-    EXPECT_NE(nullptr, p);
-    EXPECT_EQ(i+kSize, p->_value);
-  }
-  //
-  p = q.Pop();
-  EXPECT_EQ(nullptr, p);
-}

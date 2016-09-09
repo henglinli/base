@@ -25,18 +25,17 @@ class StailQ {
   StailQ(): _first(nullptr), _last(&_first) {}
   // insert tail
   auto Push(Value* node) -> void {
-    node->_next = nullptr;
     __transaction_atomic {
+      node->_next = nullptr;
       *_last = node;
       _last = &(node->_next);
     }
   }
   // remove head
   auto Pop() -> Value* {
-    Value* first(_first);
     __transaction_atomic {
+     auto first(_first);
       if (nullptr != _first) {
-        first = _first;
         if (nullptr == (_first = _first->_next)) {
           _last = &_first;
         }

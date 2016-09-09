@@ -13,7 +13,7 @@ namespace NAMESPACE {
   };
 */
 //
-template<typename Task, uint32_t kMaxCPUs = Processor<Task>::MaxCPUs()>
+template<typename Task, uint32_t kMaxCPUs = Processor::MaxCPUs()>
 class Scheduler {
  public:
   typedef Scheduler<Task, kMaxCPUs> Self;
@@ -78,7 +78,7 @@ auto Scheduler<Task, kMaxCPUs>::Signal() -> void {
 template<typename Task, uint32_t kMaxCPUs>
 auto Scheduler<Task, kMaxCPUs>::ToSelf(Task* task) -> bool {
   if (nullptr not_eq task) {
-    auto which = Processor<Task>::Current();
+    auto which = Processor::Current();
     return _worker[which].Add(task);
   }
   return false;
@@ -87,7 +87,7 @@ auto Scheduler<Task, kMaxCPUs>::ToSelf(Task* task) -> bool {
 template<typename Task, uint32_t kMaxCPUs>
 auto Scheduler<Task, kMaxCPUs>::ToOther(Task* task) -> bool {
   if (nullptr not_eq task) {
-    auto which = Processor<Task>::Current();
+    auto which = Processor::Current();
     return _worker[which].Add(task);
   }
   return false;
@@ -95,12 +95,12 @@ auto Scheduler<Task, kMaxCPUs>::ToOther(Task* task) -> bool {
 //
 template<typename Task, uint32_t kMaxCPUs>
 auto Scheduler<Task, kMaxCPUs>::StartWorker(Self& scheduler) -> bool {
-  auto cpus = Processor<Task>::Count();
+  auto cpus = Processor::Count();
   _worker_threads = cpus < kMaxCPUs ? cpus : kMaxCPUs;
   int done(0);
   //
   for(size_t i(0); i < _worker_threads; ++i) {
-    _last_victim[i] = (0x49f6428aUL + Processor<Task>::Timestap()) % _worker_threads;
+    _last_victim[i] = (0x49f6428aUL + Processor::Timestap()) % _worker_threads;
     done = Worker<Self, Task>::Start(_worker[i], scheduler);
     if (0 not_eq done) {
       for(size_t j(0); j < i; ++j) {
@@ -120,7 +120,7 @@ auto Scheduler<Task, kMaxCPUs>::Steal() -> Task* {
 //
 template<typename Task, uint32_t kMaxCPUs>
 auto Scheduler<Task, kMaxCPUs>::ChooseVictim() -> uint32_t {
-  auto self = Processor<Task>::Current();
+  auto self = Processor::Current();
   auto victim = _last_victim[self];
   while(true) {
     // chose next victim

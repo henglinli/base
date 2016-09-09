@@ -3,17 +3,14 @@
 #include <x86intrin.h>
 #include <stdint.h>
 #include <sched.h>
-#include "gnutm/queue.hh"
+#include "macros.hh"
 //
 // http://www.1024cores.net/home/lock-free-algorithms/tricks/per-processor-data
 //
 namespace NAMESPACE {
 //
-template<typename Task>
 class Processor {
  public:
-  //
-  Processor(): _task_queue() {}
   //
   inline static auto Current() -> uint32_t {
     _timestap = __rdtscp(&_number);
@@ -48,22 +45,14 @@ class Processor {
     size_t len = sizeof(set)/sizeof(uint64_t);
     uint64_t* start(reinterpret_cast<uint64_t*>(&set));
     while(len--) {
-      count += __popcntq(*start++);
+      // Note: _popcnt32 cannot compile with -fgnu-tm
+      count += __builtin_popcount(*start++);
     }
     return count? count: 1;
   }
   //
-  inline auto Push(Task* task) -> void {
-    _task_queue.Push(task);
-  }
-  //
-  inline auto Pop() -> Task* {
-    return _task_queue.Pop();
-  }
-  //
  protected:
  private:
-  gnutm::StailQ<Task> _task_queue;
   //
   thread_local static uint32_t _number;
   thread_local static uint32_t _timestap;
@@ -71,8 +60,6 @@ class Processor {
   DISALLOW_COPY_AND_ASSIGN(Processor);
 }; // class Processor
 //
-template<typename Task>
-thread_local uint32_t Processor<Task>::_number(0);
-template<typename Task>
-thread_local uint32_t Processor<Task>::_timestap(0);
+thread_local uint32_t Processor::_number(0);
+thread_local uint32_t Processor::_timestap(0);
 } // namespace NAMESPACE

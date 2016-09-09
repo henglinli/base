@@ -26,6 +26,8 @@ struct Task: public gnutm::StailQ<Task>::Node {
   DISALLOW_COPY_AND_ASSIGN(Task);
 };
 //
+auto i(0);
+//
 TEST(Scheduler, api) {
   typedef Scheduler<Task, kMaxCPU> S;
   S scheduler;
@@ -34,7 +36,7 @@ TEST(Scheduler, api) {
   Task t[kTasks];
   auto ok = scheduler.ToSelf(nullptr);
   EXPECT_FALSE(ok);
-  for (size_t i(0); i < kTasks; ++i) {
+  for (; i < kTasks; ++i) {
     t[i]._n = i;
     if(i%4) {
       ok = scheduler.ToOther(t + i);
