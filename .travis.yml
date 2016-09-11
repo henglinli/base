@@ -67,7 +67,7 @@ before_script:
     # get RunTest function
     - source test.sh
     - mkdir build && cd build
-    - TESTS="gnutm queue netpoll coroutine fiber mpsc mpmc thread worker scheduler processor"
+    - TESTS="gnutm queue netpoll coroutine fiber mpsc mpmc thread worker scheduler"
 
 script:
     - cmake -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${COMPILER} -DCMAKE_CXX_FLAGS=${EXTRA_FLAGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..

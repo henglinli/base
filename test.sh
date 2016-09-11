@@ -11,10 +11,9 @@ function RunTest() {
     if [[ ${RESULT} != 0 ]]; then
         echo "$1 return ERROR ${RESULT}"
     fi
-    # gdb here
-    gdb $1 core -ex "thread apply all bt" -ex "set pagination 0" -batch
-    # return
+    # gdb and return
     if [[ ${RESULT} != 0 ]]; then
+        gdb $1 core -ex "thread apply all bt" -ex "set pagination 0" -batch
         return ${RESULT}
     fi
 }
