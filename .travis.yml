@@ -18,6 +18,8 @@ matrix:
           packages:
             - lcov
             - g++-6
+            - gdb
+
       env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Coverage
     - compiler: gcc
       addons:
@@ -26,6 +28,8 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            - gdb
+
       env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Debug
     - compiler: gcc
       addons:
@@ -34,6 +38,8 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            - gdb
+
       env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Release
     - compiler: gcc
       addons:
@@ -42,6 +48,7 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-6
+            - gdb
       env:
         - COMPILER=g++-6 C_COMPILER=gcc-6  BUILD_TYPE=Debug
         - EXTRA_FLAGS="-fno-omit-frame-pointer -fsanitize=undefined,address"

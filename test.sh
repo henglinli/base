@@ -3,7 +3,7 @@
 function RunTest() {
     if [ "$#" -ne 1 ] || ! [ -a "$1" ]; then
         echo "Usage: $0 exe_file" >&2
-        exit 1
+        return 1
     fi
     # exec it
     RESULT=0
@@ -13,9 +13,9 @@ function RunTest() {
         echo "ERROR ${RESULT}"
     fi
     # gdb here
-    find . -maxdepth 1 -name 'core*' -print
+    gdb $1 core -ex "thread apply all bt" -ex "set pagination 0" -batch
     # return
     if [[ ${RESULT} != 0 ]]; then
-        exit ${RESULT}
+        return ${RESULT}
     fi
 }
