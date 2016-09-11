@@ -46,20 +46,26 @@ matrix:
         - COMPILER=g++-6 C_COMPILER=gcc-6  BUILD_TYPE=Debug
         - EXTRA_FLAGS="-fno-omit-frame-pointer -fsanitize=undefined,address"
 
-before_script:
-    - mkdir build && cd build
-
 install:
   - if [ "${BUILD_TYPE}" == "Coverage" -a "${TRAVIS_OS_NAME}" == "linux" ]; then
       PATH=~/.local/bin:${PATH};
       pip install --user --upgrade pip;
       pip install --user cpp-coveralls;
     fi
+    # for coredump
+  - ulimit -c unlimited -S
+  - cat /proc/sys/kernel/core_pattern
+
+before_script:
+    # get RunTest function
+    - source test.sh
+    - mkdir build && cd build
+    - TESTS="test/processor test/fiber"
 
 script:
     - cmake -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${COMPILER} -DCMAKE_CXX_FLAGS=${EXTRA_FLAGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..
     - make
-    - make CTEST_OUTPUT_ON_FAILURE=1 test
+    - for TEST in ${TESTS}; do RunTest ${TEST}; done
 
 after_success:
   - if [ "${BUILD_TYPE}" == "Coverage" -a "${TRAVIS_OS_NAME}" == "linux" ]; then
