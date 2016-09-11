@@ -8,9 +8,8 @@ function RunTest() {
     # exec it
     RESULT=0
     $1 || RESULT=$?
-    ls -l
     if [[ ${RESULT} != 0 ]]; then
-        echo "ERROR ${RESULT}"
+        echo "$1 return ERROR ${RESULT}"
     fi
     # gdb here
     gdb $1 core -ex "thread apply all bt" -ex "set pagination 0" -batch
