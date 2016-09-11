@@ -12,16 +12,16 @@ namespace NAMESPACE {
 class Processor {
  public:
   //
-  inline static auto Current() -> uint32_t {
+  inline static auto Current() -> const uint32_t {
     _timestap = __rdtscp(&_number);
     return _number;
   }
   //
-  inline static auto Timestap() -> uint64_t {
+  inline static auto Timestap() -> const uint64_t {
     return __rdtsc();
   }
   //
-  inline static auto Rdtscp(uint32_t* cpu) -> uint64_t {
+  inline static auto Rdtscp(uint32_t* cpu) -> const uint64_t {
     return __rdtscp(cpu);
   }
   //
@@ -31,11 +31,11 @@ class Processor {
     }
   }
   //
-  static constexpr auto MaxCPUs() -> size_t {
+  static constexpr auto MaxCPUs() -> const size_t {
     return sizeof(cpu_set_t)*8;
   }
   //
-  static auto Count() -> uint32_t {
+  static auto Count() -> const uint32_t {
     cpu_set_t set;
     int done = sched_getaffinity(0, sizeof(set), &set);
     if (0 not_eq done) {
