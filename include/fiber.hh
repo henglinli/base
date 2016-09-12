@@ -65,17 +65,8 @@ private:
 };
 //
 thread_local Fiber Fiber::fiber0;
-thread_local Fiber* Fiber::current(nullptr);
+thread_local Fiber* Fiber::current(&Fiber::fiber0);
 thread_local TailQ<Fiber> Fiber::idle_list;
-//
-namespace {
-struct Initiator {
-  Initiator() {
-    Fiber::current = &Fiber::fiber0;
-  }
-};
-static Initiator initiator;
-}
 //
 auto Fiber::Fork() -> Fiber* {
   auto fiber = idle_list.Pop();
