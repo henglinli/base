@@ -50,7 +50,7 @@ matrix:
             - gdb
       env:
         - COMPILER=clang++ C_COMPILER=clang  BUILD_TYPE=Debug
-        - EXTRA_FLAGS="-fsanitize=undefined,address"
+        - EXTRA_FLAGS="-fsanitize=undefined,address -stdlib=libc++"
 
 install:
   - if [ "${BUILD_TYPE}" == "Coverage" -a "${TRAVIS_OS_NAME}" == "linux" ]; then
