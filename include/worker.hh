@@ -5,7 +5,7 @@
 #include "processor.hh"
 #include "thread.hh"
 #include "atomic.hh"
-#include "gnutm/queue.hh"
+#include "mpmc/queue.hh"
 //
 namespace NAMESPACE {
 //
@@ -61,7 +61,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   Status _status;
   Scheduler* _scheduler;
   Task* _task;
-  gnutm::StailQ<Task> _processor;
+  mpmc::StailQ<Task> _processor;
   bool _spin;
   //
   DISALLOW_COPY_AND_ASSIGN(Worker);
@@ -110,9 +110,15 @@ auto Worker<Scheduler, Task>::Loop() -> Status* {
       }
     }
     //
+#if 0
     if (not _task->DoWork()) {
-      _processor.Push(_task);
+      if (kStop != atomic::Load(&_status)) {
+        _processor.Push(_task);
+      }
     }
+#else
+    _task->DoWork();
+#endif
   } // while
   return &_status;
 }

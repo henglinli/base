@@ -41,17 +41,16 @@ matrix:
             - gdb
 
       env: COMPILER=g++-6 C_COMPILER=gcc-6       BUILD_TYPE=Release
-    - compiler: gcc
+    - compiler: clang
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - g++-6
             - gdb
       env:
-        - COMPILER=g++-6 C_COMPILER=gcc-6  BUILD_TYPE=Debug
-        - EXTRA_FLAGS="-fno-omit-frame-pointer -fsanitize=undefined,address"
+        - COMPILER=clang++ C_COMPILER=clang  BUILD_TYPE=Debug
+        - EXTRA_FLAGS="-fsanitize=undefined,address"
 
 install:
   - if [ "${BUILD_TYPE}" == "Coverage" -a "${TRAVIS_OS_NAME}" == "linux" ]; then
@@ -67,7 +66,7 @@ before_script:
     # get RunTest function
     - source test.sh
     - mkdir build && cd build
-    - TESTS="gnutm queue netpoll coroutine fiber mpsc mpmc thread worker scheduler"
+    - TESTS="queue netpoll fiber mpsc mpmc thread worker scheduler"
 
 script:
     - cmake -DCMAKE_C_COMPILER=${C_COMPILER} -DCMAKE_CXX_COMPILER=${COMPILER} -DCMAKE_CXX_FLAGS=${EXTRA_FLAGS} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} ..

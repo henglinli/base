@@ -9,28 +9,24 @@ namespace mpmc {
 // copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.c
 //
 template<typename Value>
-class Node {
+class StailQ {
  public:
-  Node() = default;
-  virtual ~Node() = default;
+  class Node {
+   public:
+    Node(): _next(nullptr) {}
+    virtual ~Node() = default;
+    //
+   protected:
+   private:
+    Value* _next;
+    //
+    template<typename>
+    friend class StailQ;
+    //
+    DISALLOW_COPY_AND_ASSIGN(Node);
+  };
   //
- protected:
- private:
-  Value* _next;
-  //
-  template<typename>
-  friend class Queue;
-  //
-  DISALLOW_COPY_AND_ASSIGN(Node);
-};
-//
-template<typename Value>
-class [[gnu::aligned(64)]] Queue {
- public:
-  Queue()
-    : _node()
-    , _head(static_cast<Value*>(&_node))
-    , _tail() {
+  StailQ(): _node(), _head(static_cast<Value*>(&_node)), _tail() {
     _tail._aba = 0;
     _tail._ptr = static_cast<Value*>(&_node);
   }
@@ -44,8 +40,7 @@ class [[gnu::aligned(64)]] Queue {
     _Node cmp, xchg;
     Value* next(nullptr);
     //
-    cmp._aba = _tail._aba;
-    cmp._ptr = _tail._ptr;
+    cmp._data = atomic::Load(&(_tail._data));
     //
     do {
       // Get the next node rather than the tail.
@@ -64,8 +59,7 @@ class [[gnu::aligned(64)]] Queue {
   }
   //
  protected:
- private:
-  struct [[gnu::aligned(16)]] _Node {
+  struct _Node {
     union {
       struct {
         uint64_t _aba;
@@ -75,9 +69,12 @@ class [[gnu::aligned(64)]] Queue {
     };
   };
   //
-  Node<Value> _node;
+ private:
+  Node _node;
   Value* _head;
   _Node _tail;
+  //
+  DISALLOW_COPY_AND_ASSIGN(StailQ);
 };
 } // namespace mpmc
 } // namespace NAMESPACE

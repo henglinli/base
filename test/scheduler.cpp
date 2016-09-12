@@ -7,7 +7,7 @@ using namespace NAMESPACE;
 const size_t kTasks(102400);
 const size_t kMaxCPU(4);
 //
-struct Task: public gnutm::StailQ<Task>::Node {
+struct Task: public mpmc::StailQ<Task>::Node {
   Task(): _n(0), _ok(false) {}
   ~Task() = default;
   //
@@ -26,7 +26,7 @@ struct Task: public gnutm::StailQ<Task>::Node {
   DISALLOW_COPY_AND_ASSIGN(Task);
 };
 //
-auto i(0);
+size_t i(0);
 //
 TEST(Scheduler, api) {
   typedef Scheduler<Task, kMaxCPU> S;

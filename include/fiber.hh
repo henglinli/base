@@ -5,11 +5,15 @@
 #define _XOPEN_SOURCE 700
 #endif // __APPLE__
 //
-#include <stddef.h>
-#include <assert.h>
 #include "queue.hh"
 #include "macros.hh"
 //
+#ifdef __clang__
+extern "C" int __cxa_thread_atexit(void (*func)(), void *obj, void *dso_symbol) {
+  int __cxa_thread_atexit_impl(void (*)(), void *, void *);
+  return __cxa_thread_atexit_impl(func, obj, dso_symbol);
+}
+#endif // __clang__
 namespace NAMESPACE {
 //
 namespace {
@@ -77,7 +81,11 @@ auto Fiber::Fork() -> Fiber* {
   auto fiber = idle_list.Pop();
   static_assert(sizeof(*fiber) == kDefaultStackSize, "invalid stack size");
   if (nullptr == fiber) {
+#ifdef __clang__
+    auto tmp = new Fiber;
+#else // __clang__
     auto tmp = __builtin_malloc(sizeof(*fiber));
+#endif // __clang__
     if (nullptr == tmp) {
       return nullptr;
     }
@@ -112,7 +120,6 @@ auto Fiber::Switch() -> void {
       if (frame_size bitand (16-1)) {
         frame_size += 16 - (frame_size bitand (16-1));
       }
-      assert(frame_size < 4096);
       _env[SP] = _stack + sizeof(_stack) - frame_size;
       Longjmp(_env);
     }

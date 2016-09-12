@@ -36,7 +36,10 @@ class Condition {
 //
 class PthreadCond final: public Condition<PthreadCond> {
  public:
-  PthreadCond(): _mutex(PTHREAD_MUTEX_INITIALIZER), _cond(PTHREAD_COND_INITIALIZER) {}
+  PthreadCond(): _mutex(PTHREAD_MUTEX_INITIALIZER), _cond(PTHREAD_COND_INITIALIZER) {
+    pthread_mutex_init(&_mutex, nullptr);
+    pthread_cond_init(&_cond, nullptr);
+  }
   //
   ~PthreadCond() {
     pthread_cond_destroy(&_cond);

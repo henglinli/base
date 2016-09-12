@@ -1,15 +1,15 @@
 // -*- coding:utf-8-unix; -*-
 #include "gtest/gtest.h"
 #include "worker.hh"
-#include "gnutm/queue.hh"
 //
 using namespace NAMESPACE;
 //
 const size_t kTasks(1024);
 //
-struct Task: public gnutm::StailQ<Task>::Node {
+struct Task: public mpmc::StailQ<Task>::Node {
   bool _ok;
-  Task(): _ok(false) {}
+  int n;
+  Task(): _ok(false), n(0) {}
   //
   auto DoWork() -> bool {
     size_t sum(0);
@@ -21,7 +21,7 @@ struct Task: public gnutm::StailQ<Task>::Node {
       _ok = true;
       return false;
     }
-    printf("%dr ", _ok);
+    printf("%dr%d ", _ok, n);
     return true;
   }
   //
@@ -41,6 +41,7 @@ TEST(Worker, api) {
   Task t[kTasks];
   auto ok(false);
   for (size_t i(0); i < kTasks; ++i) {
+    t[i].n = i;
     ok = worker.Add(t + i);
     EXPECT_EQ(true, ok);
   }
