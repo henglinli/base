@@ -110,15 +110,11 @@ auto Worker<Scheduler, Task>::Loop() -> Status* {
       }
     }
     //
-#if 0
     if (not _task->DoWork()) {
       if (kStop != atomic::Load(&_status)) {
         _processor.Push(_task);
       }
     }
-#else
-    _task->DoWork();
-#endif
   } // while
   return &_status;
 }

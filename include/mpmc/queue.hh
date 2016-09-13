@@ -26,18 +26,19 @@ class StailQ {
     DISALLOW_COPY_AND_ASSIGN(Node);
   };
   //
-  StailQ(): _node(), _head(static_cast<Value*>(&_node)), _tail() {
+  StailQ(): _node(), _head(reinterpret_cast<Value*>(&_node)), _tail() {
     _tail._aba = 0;
-    _tail._ptr = static_cast<Value*>(&_node);
+    _tail._ptr = reinterpret_cast<Value*>(&_node);
   }
-  //
-  void Push(Value* value) {
-    auto prev = atomic::Exchange(&_head, value);
-    atomic::Store(&(prev->_next), value);
+  // insert head
+  auto Push(Value* node) -> void {
+    atomic::Store(&(node->_next), static_cast<Value*>(nullptr));
+    auto prev = atomic::Exchange(&_head, node);
+    atomic::Store(&(prev->_next), node);
   }
-  //
-  Value* Pop() {
-    _Node cmp, xchg;
+  // remove tail
+  auto Pop() -> Value* {
+    Pointer cmp, xchg;
     Value* next(nullptr);
     //
     cmp._data = atomic::Load(&(_tail._data));
@@ -59,20 +60,18 @@ class StailQ {
   }
   //
  protected:
-  struct _Node {
-    union {
-      struct {
-        uint64_t _aba;
-        Value* _ptr;
-      };
-      uint128_t _data;
+  union Pointer {
+    struct {
+      uint64_t _aba;
+      Value* _ptr;
     };
+    uint128_t _data;
   };
   //
  private:
   Node _node;
   Value* _head;
-  _Node _tail;
+  Pointer _tail;
   //
   DISALLOW_COPY_AND_ASSIGN(StailQ);
 };
