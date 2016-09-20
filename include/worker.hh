@@ -23,7 +23,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   static auto Start(Self& worker, Scheduler& scheduler) -> int {
     worker._scheduler = &scheduler;
     auto done = Self::Run(worker);
-    worker._status = kReady;
+    atomic::Store(&(worker._status), kReady);
     return done;
   }
   //
@@ -61,7 +61,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   Status _status;
   Scheduler* _scheduler;
   Task* _task;
-  mpmc::StailQ<Task> _processor;
+  mpmc::BoundedQ<Task, 1<<16 > _processor;
   bool _spin;
   //
   DISALLOW_COPY_AND_ASSIGN(Worker);

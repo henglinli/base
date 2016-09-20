@@ -5,7 +5,7 @@
 //
 using namespace NAMESPACE;
 //
-class Session: public mpmc::StailQ<Session>::Node {
+class Session {
  public:
   Session(): _value(0) {}
   //
@@ -15,7 +15,7 @@ class Session: public mpmc::StailQ<Session>::Node {
 const size_t kSize(128);
 //
 TEST(mpmc, Pop) {
-  mpmc::StailQ<Session> q;
+  mpmc::BoundedQ<Session, 1<<10 > q;
   auto p = q.Pop();
   EXPECT_EQ(nullptr, p);
   p = q.Pop();
@@ -25,7 +25,7 @@ TEST(mpmc, Pop) {
 Session s[kSize];
 //
 TEST(mpmc, PushPop) {
-  mpmc::StailQ<Session> q;
+  mpmc::BoundedQ<Session, 1<<10> q;
   Session* p(nullptr);
   //
   for (size_t i(0); i < sizeof(s)/sizeof(s[0]); ++i) {
@@ -42,9 +42,9 @@ TEST(mpmc, PushPop) {
   EXPECT_EQ(1, p->_value);
 }
 //
-struct Google: public mpmc::StailQ<Google>::Node {};
+struct Google {};
 //
-mpmc::StailQ<Google> q;
+mpmc::BoundedQ<Google, 1<<12> q;
 //
 struct Producer: public Thread<Producer> {
   int _sum;
@@ -91,7 +91,7 @@ struct Consumer: public Thread<Consumer> {
   DISALLOW_COPY_AND_ASSIGN(Consumer);
 };
 //
-TEST(gnutm, stailq) {
+TEST(mpmc, full) {
   Consumer c1(1000*10), c2(1000*11);
   Producer p1(1000*12), p2(1000*13);
   //

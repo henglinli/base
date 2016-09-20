@@ -56,7 +56,7 @@ class Scheduler {
   //
  private:
   Worker<Self, Task> _worker[kMaxCPUs];
-  uint32_t _last_victim[kMaxCPUs];
+  size_t _last_victim[kMaxCPUs];
   uint32_t _worker_threads;
 }; // class Scheduler
 //
@@ -100,7 +100,7 @@ auto Scheduler<Task, kMaxCPUs>::StartWorker(Self& scheduler) -> bool {
   int done(0);
   //
   for(size_t i(0); i < _worker_threads; ++i) {
-    _last_victim[i] = (0x49f6428aUL + Processor::Timestap()) % _worker_threads;
+    atomic::Store(_last_victim + i, (0x49f6428aUL + Processor::Timestap()) % _worker_threads);
     done = Worker<Self, Task>::Start(_worker[i], scheduler);
     if (0 not_eq done) {
       for(size_t j(0); j < i; ++j) {
@@ -121,7 +121,7 @@ auto Scheduler<Task, kMaxCPUs>::Steal() -> Task* {
 template<typename Task, uint32_t kMaxCPUs>
 auto Scheduler<Task, kMaxCPUs>::ChooseVictim() -> uint32_t {
   auto self = Processor::Current();
-  auto victim = _last_victim[self];
+  auto victim = atomic::Load(_last_victim + self);
   while(true) {
     // chose next victim
     if (victim == (_worker_threads - 1)) {
@@ -130,7 +130,7 @@ auto Scheduler<Task, kMaxCPUs>::ChooseVictim() -> uint32_t {
       ++victim;
     }
     // victim not found then self is victim
-    if (victim == _last_victim[self]) {
+    if (victim == atomic::Load(_last_victim + self)) {
       break;
     }
     // self should not be victim
@@ -138,7 +138,7 @@ auto Scheduler<Task, kMaxCPUs>::ChooseVictim() -> uint32_t {
       continue;
     }
     // save last victim
-    _last_victim[self] = victim;
+    atomic::Store(_last_victim + self, victim);
     return victim;
   }
   return self;

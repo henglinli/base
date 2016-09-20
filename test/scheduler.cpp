@@ -7,7 +7,7 @@ using namespace NAMESPACE;
 const size_t kTasks(102400);
 const size_t kMaxCPU(4);
 //
-struct Task: public mpmc::StailQ<Task>::Node {
+struct Task {
   Task(): _n(0), _ok(false) {}
   ~Task() = default;
   //

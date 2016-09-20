@@ -6,7 +6,7 @@ using namespace NAMESPACE;
 //
 const size_t kTasks(1024);
 //
-struct Task: public mpmc::StailQ<Task>::Node {
+struct Task {
   bool _ok;
   int n;
   Task(): _ok(false), n(0) {}

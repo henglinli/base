@@ -6,74 +6,87 @@
 //
 namespace NAMESPACE {
 namespace mpmc {
-// copy of https://github.com/CausalityLtd/ponyc/blob/master/src/libponyrt/sched/mpmcq.c
-//
-template<typename Value>
-class StailQ {
+// http://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue
+template<typename T, size_t kCapacity>
+class BoundedQ {
+  static_assert(kCapacity >= 2, "kCapacity should >= 2");
+  static_assert(not (kCapacity bitand (kCapacity - 1)), "kCapacity should power of 2");
  public:
-  class Node {
-   public:
-    Node(): _next(nullptr) {}
-    virtual ~Node() = default;
-    //
-   protected:
-   private:
-    Value* _next;
-    //
-    template<typename>
-    friend class StailQ;
-    //
-    DISALLOW_COPY_AND_ASSIGN(Node);
-  };
+  BoundedQ(): _pad0(), _buffer(), _pad1(), _push(0), _pad2(), _pop(0), _pad3() {
+    for (auto i(0LU); i < kCapacity; ++i) {
+      atomic::Store(&(_buffer[i].sequence), i);
+    }
+    atomic::Store(&_push, 0LU);
+    atomic::Store(&_pop, 0LU);
+  }
   //
-  StailQ(): _node(), _head(reinterpret_cast<Value*>(&_node)), _tail() {
-    _tail._aba = 0;
-    _tail._ptr = reinterpret_cast<Value*>(&_node);
-  }
-  // insert head
-  auto Push(Value* node) -> void {
-    atomic::Store(&(node->_next), static_cast<Value*>(nullptr));
-    auto prev = atomic::Exchange(&_head, node);
-    atomic::Store(&(prev->_next), node);
-  }
-  // remove tail
-  auto Pop() -> Value* {
-    Pointer cmp, xchg;
-    Value* next(nullptr);
-    //
-    cmp._data = atomic::Load(&(_tail._data));
-    //
-    do {
-      // Get the next node rather than the tail.
-      // The tail is either a stub or has already been consumed.
-      next = atomic::Load(&(cmp._ptr->_next));
-      // Bailout if we have no next node.
-      if (nullptr == next) {
-        return nullptr;
+  auto Push(T* ptr) -> bool {
+    Cell* cell(nullptr);
+    auto pos = atomic::Load(&_push);
+    while (true) {
+      cell = &_buffer[pos bitand (kCapacity - 1)];
+      auto seq = atomic::Load(&(cell->sequence));
+      auto diff = static_cast<intptr_t>(seq) - static_cast<intptr_t>(pos);
+      if(0 == diff) {
+        // empty
+        if (atomic::CAS(&_push, &pos, pos + 1)) {
+          break;
+        }
+      } else if (0 > diff) {
+        // full
+        return false;
+      } else {
+        pos = atomic::Load(&_push);
       }
-      // Make the next node the tail, incrementing the aba counter.
-      // If this fails, cmp becomes the new tail and we retry the loop.
-      xchg._aba = cmp._aba + 1;
-      xchg._ptr = next;
-    } while(not atomic::CAS(&(_tail._data), &(cmp._data), xchg._data));
-    return next;
+    }
+    cell->ptr = ptr;
+    atomic::Store(&(cell->sequence), pos + 1);
+    return true;
   }
   //
+  auto Pop() -> T* {
+    Cell* cell(nullptr);
+    auto pos = atomic::Load(&_pop);
+    while (true) {
+      cell = &_buffer[pos bitand (kCapacity - 1)];
+      auto seq = atomic::Load(&(cell->sequence));
+      auto diff = static_cast<intptr_t>(seq) - static_cast<intptr_t>(pos + 1);
+      if (0 == diff) {
+        if (atomic::CAS(&_pop, &pos, pos + 1)) {
+          break;
+        }
+      } else if (0 > diff) {
+        // empty
+        return nullptr;
+      } else {
+        pos = atomic::Load(&_pop);
+      }
+    }
+    auto ptr = cell->ptr;
+    atomic::Store(&(cell->sequence), pos + kCapacity);
+    return ptr;
+  }
  protected:
-  union Pointer {
-    struct {
-      uint64_t _aba;
-      Value* _ptr;
-    };
-    uint128_t _data;
+  struct Cell {
+    Cell() = default;
+    ~Cell() = default;
+    T* ptr;
+    size_t sequence;
   };
+  //
+  static const size_t kCacheLineSize = 64;
+  typedef char CacheLinePad[kCacheLineSize];
   //
  private:
-  Node _node;
-  Value* _head;
-  Pointer _tail;
+  CacheLinePad _pad0;
+  Cell _buffer[kCapacity];
+  CacheLinePad _pad1;
+  size_t _push;
+  CacheLinePad _pad2;
+  size_t _pop;
+  CacheLinePad _pad3;
   //
-  DISALLOW_COPY_AND_ASSIGN(StailQ);
+  DISALLOW_COPY_AND_ASSIGN(BoundedQ);
 };
 } // namespace mpmc
 } // namespace NAMESPACE
