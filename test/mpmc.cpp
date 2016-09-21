@@ -44,13 +44,14 @@ TEST(mpmc, PushPop) {
 //
 struct Google {};
 //
-mpmc::BoundedQ<Google, 1<<12> q;
+mpmc::BoundedQ<Google, 1<<11> q;
 //
 struct Producer: public Thread<Producer> {
   int _sum;
   int _result;
+  int _full;
   Google* _g;
-  explicit Producer(size_t sum): _sum(sum), _result(-1), _g(nullptr) {
+  explicit Producer(size_t sum): _sum(sum), _result(0), _full(0), _g(nullptr) {
     _g = new Google[_sum];
   }
   //
@@ -61,10 +62,17 @@ struct Producer: public Thread<Producer> {
   }
   //
   auto Loop() -> int* {
-    printf("Producer%p\n", &_result);
-    for (_result = 0; _result < _sum; ++_result) {
-      q.Push(_g + _result);
+    printf("Producer %p\n", &_result);
+    auto ok(false);
+    for (_result = 0; _result < _sum;) {
+      ok = q.Push(_g + _result);
+      if (not ok) {
+        ++_full;
+      } else {
+        ++_result;
+      }
     }
+    printf("full=%d\n", _full);
     return &_result;
   }
   //
@@ -74,17 +82,21 @@ struct Producer: public Thread<Producer> {
 struct Consumer: public Thread<Consumer> {
   int _sum;
   int _result;
+  int _empty;
   Google* _g;
-  explicit Consumer(size_t sum): _sum(sum), _result(-1), _g(nullptr) {}
+  explicit Consumer(size_t sum): _sum(sum), _result(0), _empty(0), _g(nullptr) {}
   //
   auto Loop() -> int* {
-    printf("Producer%p\n", &_result);
+    printf("Producer %p\n", &_result);
     for (_result = 0; _result < _sum;) {
       _g = q.Pop();
       if(_g) {
         ++_result;
+      } else {
+        ++_empty;
       }
     }
+    printf("empty=%d\n", _empty);
     return &_result;
   }
   //
@@ -92,8 +104,8 @@ struct Consumer: public Thread<Consumer> {
 };
 //
 TEST(mpmc, full) {
-  Consumer c1(1000*10), c2(1000*11);
-  Producer p1(1000*12), p2(1000*13);
+  Consumer c1(1000*10), c2(1000*13);
+  Producer p1(1000*11), p2(1000*12);
   //
   int done(-1);
   done = Consumer::Run(c1);

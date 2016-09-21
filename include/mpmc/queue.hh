@@ -68,7 +68,7 @@ class BoundedQ {
   }
  protected:
   struct Cell {
-    Cell() = default;
+    Cell(): ptr(nullptr), sequence(0) {}
     ~Cell() = default;
     T* ptr;
     size_t sequence;

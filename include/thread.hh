@@ -5,7 +5,6 @@
 #include <sched.h>
 #include <stdint.h>
 #include "atomic.hh"
-#include "condtion.hh"
 #include "macros.hh"
 //
 namespace NAMESPACE {
@@ -20,7 +19,7 @@ class Thread {
     kDetached,
     kExited
   };
-  Thread(): _state(kInit), _tid(0), _attr(), _start() {
+  Thread(): _state(kInit), _tid(0), _attr() {
     static_assert(__is_base_of(Thread<Impl>, Impl), "Impl must inherit from Thread<Impl>");
   }
   //
@@ -80,14 +79,9 @@ class Thread {
  protected:
   //
   auto Wait(int desired) -> int {
-    auto done(-1);
     int expect(kRunning);
     while(not atomic::CAS(&_state, &expect, desired)) {
       expect = kRunning;
-      done = Cond::Wait(_start);
-      if (0 not_eq done) {
-        return -1;
-      }
     }
     return 0;
   }
@@ -99,7 +93,7 @@ class Thread {
     while(not atomic::CAS(&_state, &expect, desired)) {
       expect = kInit;
     }
-    return Cond::Signal(_start);
+    return 0;
   }
   //
   auto RunLoop() -> void* {
@@ -205,11 +199,6 @@ class Thread {
   int _state;
   pthread_t _tid;
   pthread_attr_t _attr;
-#ifdef os_linux
-  typedef PthreadCond Cond;
-  //int _start;
-#endif
-  Cond _start;
   //
   DISALLOW_COPY_AND_ASSIGN(Thread);
 };
