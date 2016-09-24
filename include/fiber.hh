@@ -5,8 +5,12 @@
 #define _XOPEN_SOURCE 700
 #endif // __APPLE__
 //
+#include <errno.h>
 #include "queue.hh"
-#include "macros.hh"
+#include "processor.hh"
+#ifdef __linux__
+#include "linux/futex.hh"
+#endif // __linux__
 //
 #ifdef __clang__
 extern "C" int __cxa_thread_atexit(void (*func)(), void *obj, void *dso_symbol) {
@@ -47,11 +51,12 @@ protected:
   //
   typedef void* Jmpbuf[kGCCJmpBufferSize];
   //
-  enum {
+  enum: int {
     kInit,
     kJoinable,
     kDetached,
-    kFinished
+    kFinished,
+    kError
   };
   //
   Fiber(): _routine(nullptr), _arg(nullptr), _state(kInit)
@@ -63,10 +68,12 @@ protected:
   //
   auto Execute() -> void;
   //
+  auto SpinWait() -> void;
+  //
 private:
   void(*_routine)(void*);
   void* _arg;
-  size_t _state;
+  int _state;
   TailQ<Fiber> _children;
   Jmpbuf _env;
   char _stack[kDefaultStackSize-sizeof(TailQ<Fiber>::Node)-sizeof(Jmpbuf)
@@ -96,25 +103,50 @@ auto Fiber::Fork(void(*routine)(void*), void* arg) -> Fiber* {
   //
   fiber->_routine = routine;
   fiber->_arg = arg;
-  fiber->_state = kInit;
   fiber->_children.Init();
+  atomic::Store(&(fiber->_state), static_cast<int>(kInit));
   //
   parent->_children.Push(fiber);
   //
   return fiber;
 }
 //
+auto Fiber::SpinWait() -> void {
+  const int kSpinCount(30);
+  int state(kInit);
+  int done(0);
+  while(true) {
+    // spin
+    for (auto i(kSpinCount); 0 < i; --i) {
+      state = atomic::Load(&_state);
+      if (kFinished == state) {
+        // _state is kFinished, spin failed
+        return;
+      }
+      Processor::Relax();
+    }
+    // spin done, wait
+    done = Linux::Futex::Wait(&_state, kJoinable);
+    if (0 not_eq done and EAGAIN not_eq errno) {
+      // wait failed
+      atomic::Store(&_state, static_cast<int>(kError));
+      return;
+    }
+  }
+}
+//
 auto Fiber::Join() -> void {
+  int state(kInit);
   for (auto fiber = parent->_children.Pop();
-      nullptr != fiber; fiber = parent->_children.Pop()) {
-    switch (fiber->_state) {
+       nullptr != fiber; fiber = parent->_children.Pop()) {
+    state = atomic::Load(&(fiber->_state));
+    switch (state) {
       case kInit: {
         Switch(fiber);
-        fiber->_state = kFinished;
         break;
       }
       case kJoinable: {
-        fiber->_state = kFinished;
+        fiber->SpinWait();
         break;
       }
       default: {
@@ -146,12 +178,23 @@ auto Fiber::Execute() -> void {
 }
 //
 auto Fiber::Switch(Fiber* fiber) -> void {
-  auto prev = parent;
-  parent = fiber;
-  fiber->Execute();
-  parent = prev;
-  //
-  fiber->_state = kJoinable;
+  int expect(kInit);
+  int desired(kJoinable);
+  if (atomic::CAS(&(fiber->_state), &expect, desired)) {
+    auto prev = parent;
+    parent = fiber;
+    fiber->Execute();
+    parent = prev;
+    //
+    const int kWaiters(1);
+    auto waiters = Linux::Futex::Wake(&(fiber->_state), kWaiters);
+    if (0 > waiters) {
+      desired = kFinished;
+    } else {
+      desired = kError;
+    }
+    atomic::Store(&(fiber->_state), desired);
+  }
 }
 //
 } // namespace NAMESPACE

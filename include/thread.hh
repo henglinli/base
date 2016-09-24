@@ -4,8 +4,9 @@
 #include <pthread.h>
 #include <sched.h>
 #include <stdint.h>
-#include "atomic.hh"
-#include "macros.hh"
+#ifdef __linux__
+#include "linux/futex.hh"
+#endif // __linux__
 //
 namespace NAMESPACE {
 //
@@ -78,12 +79,11 @@ class Thread {
   //
  protected:
   //
-  auto Wait(int desired) -> int {
-    int expect(kRunning);
-    while(not atomic::CAS(&_state, &expect, desired)) {
-      expect = kRunning;
+  auto Spin(int expect, int desired) -> void {
+    int expected(expect);
+    while (not atomic::CAS(&_state, &expected, desired)) {
+      expected = expect;
     }
-    return 0;
   }
   //
   auto Signal() -> int {
@@ -97,10 +97,7 @@ class Thread {
   }
   //
   auto RunLoop() -> void* {
-    auto done = Signal();
-    if (0 not_eq done) {
-      return nullptr;
-    }
+    Spin(kInit, kRunning);
     return static_cast<Impl*>(this)->Loop();
   }
   //
@@ -117,7 +114,8 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    return Wait(kJoinable);
+    Spin(kRunning, kJoinable);
+    return 0;
   }
   //
   auto RunImpl(Self& impl, int cpu) -> int {
@@ -141,7 +139,8 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    return Wait(kJoinable);
+    Spin(kRunning, kJoinable);
+    return 0;
   }
   //
   auto RunBackgroudImpl(Self& impl) -> int {
@@ -162,7 +161,8 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    return Wait(kDetached);
+    Spin(kRunning, kJoinable);
+    return 0;
   }
   //
   auto RunBackgroudImpl(Self& impl, int cpu) -> int {
@@ -192,7 +192,8 @@ class Thread {
     if (0 not_eq done) {
       return -1;
     }
-    return Wait(kDetached);
+    Spin(kRunning, kJoinable);
+    return 0;
   }
   //
  private:

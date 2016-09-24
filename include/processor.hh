@@ -25,6 +25,10 @@ class Processor {
     return __rdtscp(cpu);
   }
   //
+  static auto Relax() -> void {
+    _mm_pause();
+  }
+  //
   static auto Relax(uint32_t count) -> void {
     while(count--) {
       _mm_pause();
