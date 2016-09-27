@@ -9,7 +9,7 @@
 //
 namespace NAMESPACE {
 //
-template<typename Scheduler, typename Task>
+template<typename Scheduler, typename Task, size_t kQSize = 1<<16 >
 class Worker: public Thread<Worker<Scheduler, Task> > {
  public:
   //
@@ -28,7 +28,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   }
   //
   inline auto GetTask() -> Task* {
-    return _processor.Pop();
+    return _runq.Pop();
   }
   //
   auto Loop() -> Status*;
@@ -36,7 +36,7 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   auto Add(Task* task) -> bool {
     auto status = atomic::Load(&_status);
     if (kInit == status or kReady == status) {
-      _processor.Push(task);
+      _runq.Push(task);
       return true;
     }
     return false;
@@ -61,27 +61,27 @@ class Worker: public Thread<Worker<Scheduler, Task> > {
   Status _status;
   Scheduler* _scheduler;
   Task* _task;
-  mpmc::BoundedQ<Task, 1<<16 > _processor;
+  mpmc::BoundedQ<Task, kQSize> _runq;
   bool _spin;
   //
   DISALLOW_COPY_AND_ASSIGN(Worker);
 };
 //
-template<typename Scheduler, typename Task>
-Worker<Scheduler, Task>::Worker()
+template<typename Scheduler, typename Task, size_t kQSize>
+Worker<Scheduler, Task, kQSize>::Worker()
     : _status(kInit)
     , _scheduler(nullptr)
     , _task(nullptr)
-    , _processor()
+    , _runq()
     , _spin(true) {}
 //
-template<typename Scheduler, typename Task>
-Worker<Scheduler, Task>::~Worker() {
+template<typename Scheduler, typename Task, size_t kQSize>
+Worker<Scheduler, Task, kQSize>::~Worker() {
   Abort();
 }
 //
-template<typename Scheduler, typename Task>
-auto Worker<Scheduler, Task>::Loop() -> Status* {
+template<typename Scheduler, typename Task, size_t kQSize>
+auto Worker<Scheduler, Task, kQSize>::Loop() -> Status* {
   const uint32_t spin_count(30);
   //
   while(true) {
@@ -89,7 +89,7 @@ auto Worker<Scheduler, Task>::Loop() -> Status* {
       break;
     }
     //
-    _task = _processor.Pop();
+    _task = _runq.Pop();
     if (nullptr == _task) {
       // self is empty
       _task = _scheduler->Steal();
@@ -110,11 +110,7 @@ auto Worker<Scheduler, Task>::Loop() -> Status* {
       }
     }
     //
-    if (not _task->DoWork()) {
-      if (kStop != atomic::Load(&_status)) {
-        _processor.Push(_task);
-      }
-    }
+    Task::Switch(_task);
   } // while
   return &_status;
 }

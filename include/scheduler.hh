@@ -42,7 +42,7 @@ class Scheduler {
   //
  protected:
   //
-  template<typename, typename>
+  template<typename, typename, size_t>
   friend class Worker;
   //
   template<Status kStatus>
@@ -58,6 +58,8 @@ class Scheduler {
   Worker<Self, Task> _worker[kMaxCPUs];
   size_t _last_victim[kMaxCPUs];
   uint32_t _worker_threads;
+  //
+  DISALLOW_COPY_AND_ASSIGN(Scheduler);
 }; // class Scheduler
 //
 template<typename Task, uint32_t kMaxCPUs>

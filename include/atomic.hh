@@ -28,6 +28,13 @@ inline auto CAS(Int* ptr, Int* expected, Int value) -> bool {
   static_assert(sizeof(Int) <= sizeof(int128_t), "most 128 bit Integer type only");
   return __atomic_compare_exchange_n(ptr, expected, value, false, __ATOMIC_ACQ_REL, __ATOMIC_ACQUIRE);
 }
+// AddFetch
+template<typename Int>
+inline auto AddFetch(Int* ptr, Int value) -> Int {
+  static_assert(sizeof(Int) <= sizeof(int128_t), "most 128 bit Integer type only");
+  return __atomic_add_fetch(ptr, value, __ATOMIC_RELEASE);
+}
+//
 } // namespace atomic
 //
 } // namespace NAMESPACE

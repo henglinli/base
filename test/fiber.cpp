@@ -2,7 +2,7 @@
 #include "gtest/gtest.h"
 #include "fiber.hh"
 //
-using namespace NAMESPACE;
+typedef NAMESPACE::Fiber<> Fiber;
 //
 struct Empty {
   static void Run(void*) {

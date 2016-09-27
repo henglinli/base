@@ -7,26 +7,34 @@
 //
 #include <errno.h>
 #include "queue.hh"
+#include "mpmc/queue.hh"
 #include "processor.hh"
 #ifdef __linux__
 #include "linux/futex.hh"
 #endif // __linux__
 //
 #ifdef __clang__
-extern "C" int __cxa_thread_atexit(void (*func)(), void *obj, void *dso_symbol) {
-  int __cxa_thread_atexit_impl(void (*)(), void *, void *);
+extern "C" int __cxa_thread_atexit(void (*func)(void*), void *obj, void *dso_symbol) {
+  int __cxa_thread_atexit_impl(void (*)(void*), void *, void *);
   return __cxa_thread_atexit_impl(func, obj, dso_symbol);
 }
 #endif // __clang__
 namespace NAMESPACE {
 //
-class Fiber final: public TailQ<Fiber>::Node {
+const size_t kDefautQSize = 1<<16;
+const size_t kPageSize = 4*1024;
+const size_t kDefaultStackSize = 4*kPageSize;
+//
+template<size_t kQSize = kDefautQSize, size_t kStackSize = kDefaultStackSize>
+class Fiber final: public TailQ<Fiber<kQSize, kStackSize> >::Node {
 public:
+  //
+  typedef Fiber<kQSize, kStackSize> Self;
   thread_local static Fiber fiber0;
   thread_local static Fiber* parent;
-  thread_local static TailQ<Fiber> idle_list;
+  static mpmc::BoundedQ<Self, kQSize> idleq;
   //
-  static auto Fork(void(*routine)(void*), void* arg) -> Fiber*;
+  static auto Fork(void(*routine)(void*), void* arg) -> Self*;
   //
   inline auto Detach() -> void {
     _state = kDetached;
@@ -34,12 +42,9 @@ public:
   //
   static auto Join() -> void;
   //
-  static auto Switch(Fiber* fiber) -> void;
+  static auto Switch(Self* fiber) -> void;
   //
 protected:
-  static const size_t kPageSize = 4*1024;
-  //
-  static const size_t kDefaultStackSize = 4*kPageSize;
   //
   static const size_t kGCCJmpBufferSize = 5;
   //
@@ -66,6 +71,8 @@ protected:
     __builtin_longjmp(env, 1);
   }
   //
+  static auto New() -> Self*;
+  //
   auto Execute() -> void;
   //
   auto SpinWait() -> void;
@@ -74,32 +81,42 @@ private:
   void(*_routine)(void*);
   void* _arg;
   int _state;
-  TailQ<Fiber> _children;
+  TailQ<Self> _children;
   Jmpbuf _env;
-  char _stack[kDefaultStackSize-sizeof(TailQ<Fiber>::Node)-sizeof(Jmpbuf)
-              -sizeof(TailQ<Fiber>)-3*sizeof(void*)];
+  char _stack[kStackSize-sizeof(typename TailQ<Self>::Node)-sizeof(Jmpbuf)
+              -sizeof(TailQ<Self>)-3*sizeof(void*)];
   //
   DISALLOW_COPY_AND_ASSIGN(Fiber);
 };
 //
-thread_local Fiber Fiber::fiber0;
-thread_local Fiber* Fiber::parent(&Fiber::fiber0);
-thread_local TailQ<Fiber> Fiber::idle_list;
+template<size_t kQSize, size_t kStackSize>
+thread_local Fiber<kQSize, kStackSize> Fiber<kQSize, kStackSize>::fiber0;
+template<size_t kQSize, size_t kStackSize>
+thread_local Fiber<kQSize, kStackSize>* Fiber<kQSize, kStackSize>::parent(&Fiber<kQSize, kStackSize>::fiber0);
+template<size_t kQSize, size_t kStackSize>
+mpmc::BoundedQ<Fiber<kQSize, kStackSize>, kQSize> Fiber<kQSize, kStackSize>::idleq;
 //
-auto Fiber::Fork(void(*routine)(void*), void* arg) -> Fiber* {
-  auto fiber = idle_list.Pop();
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::New() -> Self* {
+  auto fiber = idleq.Pop();
   static_assert(sizeof(*fiber) == kDefaultStackSize, "invalid stack size");
   if (nullptr == fiber) {
 #ifdef __clang__
-    auto tmp = new Fiber;
+    auto tmp = new Self;
 #else // __clang__
     auto tmp = __builtin_malloc(sizeof(*fiber));
 #endif // __clang__
     if (nullptr == tmp) {
       return nullptr;
     }
-    fiber = static_cast<Fiber*>(tmp);
+    fiber = static_cast<Self*>(tmp);
   }
+  return fiber;
+}
+//
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::Fork(void(*routine)(void*), void* arg) -> Self* {
+  auto fiber = New();
   //
   fiber->_routine = routine;
   fiber->_arg = arg;
@@ -111,7 +128,8 @@ auto Fiber::Fork(void(*routine)(void*), void* arg) -> Fiber* {
   return fiber;
 }
 //
-auto Fiber::SpinWait() -> void {
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::SpinWait() -> void {
   const int kSpinCount(30);
   int state(kInit);
   int done(0);
@@ -135,7 +153,8 @@ auto Fiber::SpinWait() -> void {
   }
 }
 //
-auto Fiber::Join() -> void {
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::Join() -> void {
   int state(kInit);
   for (auto fiber = parent->_children.Pop();
        nullptr != fiber; fiber = parent->_children.Pop()) {
@@ -153,12 +172,11 @@ auto Fiber::Join() -> void {
         break;
       }
     }
-    //
-    idle_list.Push(fiber);
   }
 }
 //
-auto Fiber::Execute() -> void {
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::Execute() -> void {
   Jmpbuf env;
   auto done = __builtin_setjmp(env);
   if (0 == done) {
@@ -177,7 +195,8 @@ auto Fiber::Execute() -> void {
   }
 }
 //
-auto Fiber::Switch(Fiber* fiber) -> void {
+template<size_t kQSize, size_t kStackSize>
+auto Fiber<kQSize, kStackSize>::Switch(Self* fiber) -> void {
   int expect(kInit);
   int desired(kJoinable);
   if (atomic::CAS(&(fiber->_state), &expect, desired)) {
@@ -194,6 +213,8 @@ auto Fiber::Switch(Fiber* fiber) -> void {
       desired = kError;
     }
     atomic::Store(&(fiber->_state), desired);
+    //
+    idleq.Push(fiber);
   }
 }
 //
