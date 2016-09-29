@@ -30,7 +30,7 @@ TEST(Scheduler, api) {
   printf("sizeof(S)=%lu\n", sizeof(scheduler));
   auto ok = S::Start(scheduler);
   EXPECT_TRUE(ok);
-  Task t[kTasks];
+  Task t[kTasks+1];
   ok = scheduler.ToSelf(nullptr);
   EXPECT_FALSE(ok);
   for (auto i(kTasks); i > 0; --i) {
